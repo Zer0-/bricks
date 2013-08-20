@@ -6,13 +6,27 @@ class PyramidBricks:
         for arg in args:
             self.add_component(arg)
 
-    def add_component(self, component_type):
-        component = component_type()
-        if hasattr('url', component):
-            self.add_route(component)
+    def add_component(self, component_type, components=None):
+        if not components:
+            components = {}
+        if component_type in components:
+            return components[component_type]
+        if hasattr(component_type, 'depends_on'):
+            deps = tuple(self.add_component(comp_type, components) for
+                        comp_type in component_type.depends_on)
+            component = component_type(*deps)
+        else:
+            component = component_type()
+        self.init_component(component)
+        components[component_type] = component
+        return component
 
-    def add_route(self, component):
-        route_name = component.__name__
+    def init_component(self, component):
+        if hasattr(component, 'url'):
+            self.route_component(component)
+
+    def route_component(self, component):
+        route_name = component.__class__.__name__
         self.config.add_route(route_name, component.url)
         for method in ['GET', 'POST', 'PUT', 'DELETE']:
             view = getattr(component, method, None)
