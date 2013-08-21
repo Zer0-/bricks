@@ -1,24 +1,37 @@
 from pyramid.config import Configurator
 
+class MissingConfiguration(Exception):
+    pass
+
 class PyramidBricks:
     def __init__(self, *args):
         self.config = Configurator()
+        self.components = {}
         for arg in args:
             self.add_component(arg)
 
-    def add_component(self, component_type, components=None):
-        if not components:
-            components = {}
-        if component_type in components:
-            return components[component_type]
+    def add_component(self, component_type):
+        if component_type in self.components:
+            return self.components[component_type]
+        args = []
+        if hasattr(component_type, 'requires_configured'):
+            try:
+                args += list(map(
+                    self.components.__getitem__,
+                    component_type.requires_configured
+                ))
+            except KeyError:
+                raise MissingConfiguration("{} requires something that "
+                    "provides {} to be configured".format(component_type, ))
         if hasattr(component_type, 'depends_on'):
-            deps = tuple(self.add_component(comp_type, components) for
-                        comp_type in component_type.depends_on)
-            component = component_type(*deps)
-        else:
-            component = component_type()
+            args += [self.add_component(comp_type) for
+                    comp_type in component_type.depends_on]
+        component = component_type(*args)
+        if hasattr(component, 'provides'):
+            for provision in component_type.provides:
+                self.components[provision] = component
         self.init_component(component)
-        components[component_type] = component
+        self.components[component_type] = component
         return component
 
     def init_component(self, component):
