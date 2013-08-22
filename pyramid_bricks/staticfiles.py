@@ -1,3 +1,5 @@
+from component import CustomComponent
+
 class StaticManager:
     provides = ['static_manager']
 
@@ -19,28 +21,16 @@ class StaticManager:
              for dep in getattr(component, 'depends_on', [])]
         )
 
-class StaticFile:
+class StaticFile(CustomComponent):
+    custom_attributes = ('resource_url',)
     requires_configured = ['static_manager']
 
     def __init__(self, static_manager):
         static_manager.add(self)
 
     def __call__(self):
-        return self.url
-
-    def __new__(cls, url, name):
-        newcls = type(
-            name,
-            (object,),
-            dict(
-                url=url,
-                requires_configured=cls.requires_configured,
-                __init__=cls.__init__,
-                __call__=cls.__call__
-            )
-        )
-        return newcls
+        return self.resource_url
 
 class StaticCss(StaticFile):
     def __call__(self):
-        return '<link rel="stylesheet" href="{}" />'.format(self.url)
+        return '<link rel="stylesheet" href="{}" />'.format(self.resource_url)
