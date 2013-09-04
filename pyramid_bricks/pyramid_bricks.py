@@ -4,7 +4,7 @@ class MissingConfiguration(Exception):
     pass
 
 def get_component_route_name(component_type):
-    return component.__name__
+    return component_type.__name__
 
 def _get_component_url(request):
     def get_component_url(component_type, *args, **kwargs):

@@ -2,7 +2,7 @@ from pyramid.renderers import RendererHelper
 
 def render_to_response(renderer_name, value, request, component):
     helper = RendererHelper(name=renderer_name)
-    context = {'component': component}
+    context = {'component': component, 'request': request}
     return helper.render_to_response(value, context, request=request)
 
 def render(renderer):
