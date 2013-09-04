@@ -3,9 +3,19 @@ from pyramid.config import Configurator
 class MissingConfiguration(Exception):
     pass
 
+def get_component_route_name(component_type):
+    return component.__name__
+
+def _get_component_url(request):
+    def get_component_url(component_type, *args, **kwargs):
+        route_name = get_component_route_name(component_type)
+        return request.route_url(route_name, *args, **kwargs)
+    return get_component_url
+
 class PyramidBricks:
     def __init__(self, *args):
         self.config = Configurator()
+        self.config.add_request_method(views.get_username, 'username', reify=True)
         self.components = {}
         for arg in args:
             self.add_component(arg)
@@ -16,10 +26,8 @@ class PyramidBricks:
         args = []
         if hasattr(component_type, 'requires_configured'):
             try:
-                args += list(map(
-                    self.components.__getitem__,
-                    component_type.requires_configured
-                ))
+                args += [self.components[requirement] for requirement
+                         in component_type.requires_configured]
             except KeyError:
                 raise MissingConfiguration("{} requires something that "
                     "provides {} to be configured".format(component_type, ))
@@ -39,7 +47,7 @@ class PyramidBricks:
             self.route_component(component)
 
     def route_component(self, component):
-        route_name = component.__class__.__name__
+        route_name = type(component)
         self.config.add_route(route_name, component.url)
         for method in ['GET', 'POST', 'PUT', 'DELETE']:
             view = getattr(component, method, None)
