@@ -15,7 +15,7 @@ def _get_component_url(request):
 class PyramidBricks:
     def __init__(self, *args):
         self.config = Configurator()
-        self.config.add_request_method(views.get_username, 'username', reify=True)
+        self.config.add_request_method(_get_component_url, 'component_url')
         self.components = {}
         for arg in args:
             self.add_component(arg)
@@ -47,7 +47,7 @@ class PyramidBricks:
             self.route_component(component)
 
     def route_component(self, component):
-        route_name = type(component)
+        route_name = get_component_route_name(type(component))
         self.config.add_route(route_name, component.url)
         for method in ['GET', 'POST', 'PUT', 'DELETE']:
             view = getattr(component, method, None)
