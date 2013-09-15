@@ -6,16 +6,14 @@ class MissingConfiguration(Exception):
 def get_component_route_name(component_type):
     return component_type.__name__
 
-def _get_component_url(request):
-    def get_component_url(component_type, *args, **kwargs):
-        route_name = get_component_route_name(component_type)
-        return request.route_url(route_name, *args, **kwargs)
-    return get_component_url
+def get_component_url(request, component_type, *args, **kwargs):
+    route_name = get_component_route_name(component_type)
+    return request.route_url(route_name, *args, **kwargs)
 
 class PyramidBricks:
     def __init__(self, *args):
         self.config = Configurator()
-        self.config.add_request_method(_get_component_url, 'component_url')
+        self.config.add_request_method(get_component_url, 'component_url')
         self.components = {}
         for arg in args:
             self.add_component(arg)
@@ -28,9 +26,10 @@ class PyramidBricks:
             try:
                 args += [self.components[requirement] for requirement
                          in component_type.requires_configured]
-            except KeyError:
+            except KeyError as e:
                 raise MissingConfiguration("{} requires something that "
-                    "provides {} to be configured".format(component_type, ))
+                    "provides {} to be configured".format(
+                        component_type, e.args[0]))
         if hasattr(component_type, 'depends_on'):
             args += [self.add_component(comp_type) for
                     comp_type in component_type.depends_on]

@@ -1,14 +1,21 @@
 from pyramid.renderers import RendererHelper
 
-def render_to_response(renderer_name, value, request, component):
-    helper = RendererHelper(name=renderer_name)
-    context = {'component': component, 'request': request}
-    return helper.render_to_response(value, context, request=request)
-
-def render(renderer):
+def render_to_response(renderer):
     def render_decorator(viewfn):
         def wrapper(clsinst, context, request):
             view_result = viewfn(clsinst, request)
-            return render_to_response(renderer, view_result, request, clsinst)
+            helper = RendererHelper(name=renderer)
+            context = {'component': clsinst, 'request': request}
+            return helper.render_to_response(view_result, context, request=request)
+        return wrapper
+    return render_decorator
+
+def render(renderer):
+    def render_decorator(viewfn):
+        def wrapper(clsinst, *args, **kwargs):
+            view_result = viewfn(clsinst, *args, **kwargs)
+            helper = RendererHelper(name=renderer)
+            context = {'component': clsinst}
+            return helper.render(view_result, context)
         return wrapper
     return render_decorator
