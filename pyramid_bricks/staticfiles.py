@@ -1,4 +1,4 @@
-from component import CustomComponent
+from .component import CustomComponent
 
 class StaticManager:
     provides = ['static_manager']
@@ -10,11 +10,11 @@ class StaticManager:
         self.static_components[type(static_component)] = static_component
 
     def render_static(self, component, visited=None):
-        if not visited:
+        if visited is None:
             visited = set()
-        resources_string = ''
         if component in visited:
-            return resources_string
+            return ''
+        visited.add(component)
         resources_string = self.static_components.get(component, str)()
         return resources_string + ''.join(
             [self.render_static(dep, visited)
@@ -22,15 +22,19 @@ class StaticManager:
         )
 
 class StaticFile(CustomComponent):
-    custom_attributes = ('resource_url',)
+    custom_attributes = ('asset',)
     requires_configured = ['static_manager']
 
     def __init__(self, static_manager):
         static_manager.add(self)
 
     def __call__(self):
-        return self.resource_url
+        return self.asset
 
 class StaticCss(StaticFile):
     def __call__(self):
-        return '<link rel="stylesheet" href="{}" />'.format(self.resource_url)
+        return '<link rel="stylesheet" href="{}" />'.format(self.asset)
+
+class StaticJs(StaticFile):
+    def __call__(self):
+        return '<script src="{}"></script>'.format(self.asset)
