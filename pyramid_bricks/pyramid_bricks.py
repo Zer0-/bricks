@@ -13,6 +13,7 @@ def get_component_url(request, component_type, *args, **kwargs):
 class PyramidBricks:
     def __init__(self, *args):
         self.config = Configurator()
+        self.config.include('pyramid_mako')
         self.config.add_request_method(get_component_url, 'component_url')
         self.components = {}
         for arg in args:
