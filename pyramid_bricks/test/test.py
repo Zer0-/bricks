@@ -1,5 +1,5 @@
 import unittest
-from os.path import join, exists
+from os.path import join
 from pyramid_bricks import PyramidBricks, Settings
 from pyramid_bricks.staticfiles import StaticManager
 from pyramid_bricks.static_builder import establish_static_assets
