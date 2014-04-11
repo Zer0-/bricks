@@ -1,3 +1,5 @@
+from os.path import join, basename
+from pyramid.path import AssetResolver
 from .component import CustomComponent
 
 class StaticManager:
@@ -22,19 +24,63 @@ class StaticManager:
         )
 
 class StaticFile(CustomComponent):
+    """Static asset that's part of a component (served locally)
+    For things like coffeescript or sass that need to be compiled,
+    'has_build_stage' should be set to True.
+    The 'relpath' is where the asset is relative to the root static path.
+    """
     custom_attributes = ('asset',)
+    requires_configured = ['static_manager', 'json_settings']
+    has_build_stage = False
+    relpath = ''
+
+    def __init__(self, static_manager, settings):
+        static_manager.add(self)
+        self.static_url = settings['served_static_url']
+        self.asset_path = AssetResolver().resolve(self.asset).abspath()
+
+    def get_url(self):
+        return self.static_url +\
+                join(self.relpath, basename(self.asset_path))
+
+    def __call__(self):
+        return self.get_url()
+
+def _css(url):
+    return '<link rel="stylesheet" href="{}" />'.format(url)
+
+def _js(url):
+    return '<script src="{}"></script>'.format(url)
+
+class StaticCss(StaticFile):
+    relpath = 'css'
+
+    def __call__(self):
+        return _css(self.get_url())
+
+class StaticJs(StaticFile):
+    relpath = 'js'
+
+    def __call__(self):
+        return _js(self.get_url())
+
+class ExternalStatic(CustomComponent):
+    custom_attributes = ('url',)
     requires_configured = ['static_manager']
 
     def __init__(self, static_manager):
         static_manager.add(self)
 
-    def __call__(self):
-        return self.asset
+    def get_url(self):
+        return self.url
 
-class StaticCss(StaticFile):
     def __call__(self):
-        return '<link rel="stylesheet" href="{}" />'.format(self.asset)
+        return self.url
 
-class StaticJs(StaticFile):
+class ExternalCss(ExternalStatic):
     def __call__(self):
-        return '<script src="{}"></script>'.format(self.asset)
+        return _css(self.url)
+
+class ExternalJs(ExternalStatic):
+    def __call__(self):
+        return _js(self.url)
