@@ -21,11 +21,13 @@ def read_settings(location, filename=None):
 class Settings(dict):
     provides = ['json_settings']
 
-    def __init__(self):
+    def __init__(self, location=None):
         dict.__init__(self)
         if hasattr(__main__, '__file__'):
             here = os.path.dirname(__main__.__file__)
         else:
             here = os.path.dirname(__file__)
-        self.update(read_settings(here))
+        if location is None:
+            location = here
+        self.update(read_settings(location))
         self['project_dir'] = here
