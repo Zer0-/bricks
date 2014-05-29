@@ -2,7 +2,12 @@ from setuptools import setup
 
 requires = [
     'pyramid',
-    'pyramid_mako'
+    'pyramid_mako',
+    'ceramic_forms'
+]
+
+links = [
+    'git+https://github.com/Zer0-/Ceramic-Forms.git#egg=ceramic_forms'
 ]
 
 setup(
@@ -19,4 +24,5 @@ setup(
     packages=['pyramid_bricks'],
     include_package_data=True,
     install_requires=requires,
+    dependency_links=links,
 )
