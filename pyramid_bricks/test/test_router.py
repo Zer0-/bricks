@@ -61,21 +61,51 @@ class TestRouter(unittest.TestCase):
 
     def testSchemaRoute(self):
         from ceramic_forms import Use, And
+        first_target = Route()
         target_route = Route()
         second_target = Route()
         url_tree = Route() + {
+            'asdf': Route() + {
+                str: first_target
+            },
             Use(int): Route() + {
                 'target': target_route,
                 And(Use(int), lambda x: (x % 2) == 0): second_target
             },
             'other_stuff': Route()
         }
+        request = Request.blank('/asdf/55a5')
+        self.assertEqual(routing(url_tree, request), first_target)
         request = Request.blank('/123/target')
         self.assertEqual(routing(url_tree, request), target_route)
         request = Request.blank('/3215/36')
         self.assertEqual(routing(url_tree, request), second_target)
         request = Request.blank('/3215/35')
         self.assertEqual(routing(url_tree, request), 404)
+
+    def testSchemaSubtreeRoute(self):
+        from ceramic_forms import Use, And
+        target_route = Route(handles_subtree=True)
+        url_tree = Route() + {
+            str: target_route
+        }
+        request = Request.blank('/somestring/')
+        self.assertEqual(routing(url_tree, request), target_route)
+        request = Request.blank('/somestring/one/two/three')
+        self.assertEqual(routing(url_tree, request), target_route)
+
+class TestRequestRouteApi(unittest.TestCase):
+    def testVars(self):
+        from ceramic_forms import Use
+        url_tree = Route() + {
+            Use(int): Route() + {
+                str: Route()
+            }
+        }
+        request = Request.blank('/1234/something')
+        route = routing(url_tree, request)
+        vars = request.route.vars
+        self.assertEqual(vars, [1234, 'something'])
 
 if __name__ == '__main__':
     unittest.main()
