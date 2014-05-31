@@ -1,6 +1,7 @@
 import unittest
-from pyramid_bricks.routing import routing
+from pyramid_bricks.routing import RequestRoute
 from webob import Request
+from ceramic_forms import Use
 
 class Route(dict):
     def __init__(
@@ -14,107 +15,6 @@ class Route(dict):
     def __add__(self, subtree):
         self.update(subtree)
         return self
-
-class TestRouter(unittest.TestCase):
-    def testTrivialRoot(self):
-        r = Route()
-        request = Request.blank('/')
-        self.assertEqual(routing(r, request), r)
-
-    def testSimpleRouteTree(self):
-        target_route = Route()
-        second_target = Route()
-        url_tree = Route() + {
-            'asdf': Route() + {
-                'target': target_route,
-                'second_target': second_target
-            },
-            'other_stuff': Route()
-        }
-        request = Request.blank('/asdf/target')
-        self.assertEqual(routing(url_tree, request), target_route)
-        request = Request.blank('/asdf/second_target')
-        self.assertEqual(routing(url_tree, request), second_target)
-        request = Request.blank('/other_stuff/asdf')
-        self.assertEqual(routing(url_tree, request), 404)
-        request = Request.blank('/asdf/non_existant')
-        self.assertEqual(routing(url_tree, request), 404)
-        request = Request.blank('/asdf/target/too_far')
-        self.assertEqual(routing(url_tree, request), 404)
-
-    def testSubtreeHandling(self):
-        target_route = Route(handles_subtree=True)
-        url_tree = Route() + {
-            'subtrees': target_route
-        }
-        request = Request.blank('/subtrees')
-        self.assertEqual(routing(url_tree, request), target_route)
-        request = Request.blank('/subtrees/one')
-        self.assertEqual(routing(url_tree, request), target_route)
-        request = Request.blank('/subtrees/one/two/three')
-        self.assertEqual(routing(url_tree, request), target_route)
-
-    def testSubtreeNextpart(self):
-        target_route = Route()
-        url_tree = Route() + {
-            'subtrees': Route(handles_subtree=True) + {
-                'next_part': target_route
-            }
-        }
-        request = Request.blank('/subtrees/one/and/two/next_part')
-        self.assertEqual(routing(url_tree, request), target_route)
-
-    def testSchemaRoute(self):
-        from ceramic_forms import Use, And
-        first_target = Route()
-        target_route = Route()
-        second_target = Route()
-        url_tree = Route() + {
-            'asdf': Route() + {
-                str: first_target
-            },
-            Use(int): Route() + {
-                'target': target_route,
-                And(Use(int), lambda x: (x % 2) == 0): second_target
-            },
-            'other_stuff': Route()
-        }
-        request = Request.blank('/asdf/55a5')
-        self.assertEqual(routing(url_tree, request), first_target)
-        request = Request.blank('/123/target')
-        self.assertEqual(routing(url_tree, request), target_route)
-        request = Request.blank('/3215/36')
-        self.assertEqual(routing(url_tree, request), second_target)
-        request = Request.blank('/3215/35')
-        self.assertEqual(routing(url_tree, request), 404)
-
-    def testSchemaSubtreeRoute(self):
-        from ceramic_forms import Use, And
-        target_route = Route(handles_subtree=True)
-        url_tree = Route() + {
-            str: target_route
-        }
-        request = Request.blank('/somestring/')
-        self.assertEqual(routing(url_tree, request), target_route)
-        request = Request.blank('/somestring/one/two/three')
-        self.assertEqual(routing(url_tree, request), target_route)
-
-class TestRequestRouteApi(unittest.TestCase):
-    def testVars(self):
-        from ceramic_forms import Use
-        url_tree = Route() + {
-            Use(int): Route() + {
-                str: Route()
-            }
-        }
-        request = Request.blank('/1234/something')
-        route = routing(url_tree, request)
-        vars = request.route.vars
-        self.assertEqual(vars, [1234, 'something'])
-
-#New code (refactor above)
-from ceramic_forms import Use
-from pyramid_bricks.routing import RequestRoute
 
 class TestRequestRoute(unittest.TestCase):
     def setUp(self):
@@ -130,7 +30,8 @@ class TestRequestRoute(unittest.TestCase):
                         Use(int): self.r4
                     }
                 }
-            }
+            },
+            'not_used': Route()
         }
 
     def testRouteMatching(self):
@@ -158,6 +59,38 @@ class TestRequestRoute(unittest.TestCase):
         request = Request.blank('/first/1/one/two/second/2/three/four')
         routeapi = RequestRoute(request, self.routemap)
         self.assertEqual(routeapi.vars, [1, 2])
+
+    def testTrivialRoot(self):
+        request = Request.blank('/')
+        routeapi = RequestRoute(request, self.routemap)
+        self.assertEqual(routeapi.route, self.root)
+
+    def testRouteFinding(self):
+        path_route_pairs = [
+            ('/first', self.r1),
+            ('/first/1000', self.r2),
+            ('/first/3/', self.r2),
+            ('/first/3/a/b/c/d/e', self.r2),
+            ('/first/3/a/b/second', self.r3),
+            ('/first/3/a/b/second/3', self.r4),
+            ('/first/3/a/b/second/44/c/d/e', self.r4),
+        ]
+        for path, route in path_route_pairs:
+            request = Request.blank(path)
+            routeapi = RequestRoute(request, self.routemap)
+            self.assertEqual(routeapi.route, route)
+
+    def testRoutefindingFailing(self):
+        path_route_pairs = [
+            '/invalid',
+            '/first/asdf',
+            '/first/asdf/second'
+            '/first/3/second/asdf'
+        ]
+        for path in path_route_pairs:
+            request = Request.blank(path)
+            routeapi = RequestRoute(request, self.routemap)
+            self.assertEqual(routeapi._matched_routes, 404)
 
 if __name__ == '__main__':
     unittest.main()
