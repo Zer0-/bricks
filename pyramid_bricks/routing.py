@@ -20,7 +20,7 @@ def _match_routes(path, routemap):
         matched.append((part, routemap))
     return matched
 
-class RequestRoute:
+class RouteApi:
     def __init__(self, request, routemap):
         self.routemap = routemap
         path = [p for p in request.path.split('/') if len(p)]
@@ -40,7 +40,24 @@ class RequestRoute:
             elif route != routemap:
                 vars.append(part)
                 routemap = route
-        return vars
+        return tuple(vars)
+
+    @property
+    def relative(self):
+        routemap = self.routemap
+        relative_paths = []
+        current_relative = []
+        for part, route in self._matched_routes:
+            if route == routemap and route.handles_subtree:
+                current_relative.append(part)
+            else:
+                routemap = route
+                if current_relative:
+                    relative_paths.append(tuple(current_relative))
+                    current_relative = []
+        if current_relative:
+            relative_paths.append(tuple(current_relative))
+        return tuple(relative_paths)
 
     @property
     def route(self):

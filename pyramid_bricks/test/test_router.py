@@ -1,5 +1,5 @@
 import unittest
-from pyramid_bricks.routing import RequestRoute
+from pyramid_bricks.routing import RouteApi
 from webob import Request
 from ceramic_forms import Use
 
@@ -36,7 +36,7 @@ class TestRequestRoute(unittest.TestCase):
 
     def testRouteMatching(self):
         request = Request.blank('/first/1/one/two/second/2/three/four')
-        routeapi = RequestRoute(request, self.routemap)
+        routeapi = RouteApi(request, self.routemap)
         shouldmatch = [
             ('/', self.root),
             ('first', self.r1),
@@ -52,17 +52,17 @@ class TestRequestRoute(unittest.TestCase):
 
     def testTransformedPath(self):
         request = Request.blank('/first/1/one/two/second/2/three/four')
-        routeapi = RequestRoute(request, self.routemap)
+        routeapi = RouteApi(request, self.routemap)
         self.assertEqual(routeapi.path, ['first', 1, 'one', 'two', 'second', 2, 'three', 'four'])
 
     def testVars(self):
         request = Request.blank('/first/1/one/two/second/2/three/four')
-        routeapi = RequestRoute(request, self.routemap)
-        self.assertEqual(routeapi.vars, [1, 2])
+        routeapi = RouteApi(request, self.routemap)
+        self.assertEqual(routeapi.vars, (1, 2))
 
     def testTrivialRoot(self):
         request = Request.blank('/')
-        routeapi = RequestRoute(request, self.routemap)
+        routeapi = RouteApi(request, self.routemap)
         self.assertEqual(routeapi.route, self.root)
 
     def testRouteFinding(self):
@@ -77,20 +77,25 @@ class TestRequestRoute(unittest.TestCase):
         ]
         for path, route in path_route_pairs:
             request = Request.blank(path)
-            routeapi = RequestRoute(request, self.routemap)
+            routeapi = RouteApi(request, self.routemap)
             self.assertEqual(routeapi.route, route)
 
     def testRoutefindingFailing(self):
-        path_route_pairs = [
+        invalid_routes = [
             '/invalid',
             '/first/asdf',
             '/first/asdf/second'
             '/first/3/second/asdf'
         ]
-        for path in path_route_pairs:
+        for path in invalid_routes:
             request = Request.blank(path)
-            routeapi = RequestRoute(request, self.routemap)
+            routeapi = RouteApi(request, self.routemap)
             self.assertEqual(routeapi._matched_routes, 404)
+
+    def testRelative(self):
+        request = Request.blank('/first/1/one/two/second/2/three/four')
+        routeapi = RouteApi(request, self.routemap)
+        self.assertEqual(routeapi.relative, (('one', 'two'), ('three', 'four')))
 
 if __name__ == '__main__':
     unittest.main()
