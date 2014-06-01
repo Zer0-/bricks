@@ -1,6 +1,6 @@
 import unittest
 from os.path import join
-from pyramid_bricks import PyramidBricks, Settings
+from pyramid_bricks import PyramidBricks
 from pyramid_bricks.staticfiles import StaticManager
 from pyramid_bricks.static_builder import establish_static_assets
 from test_components.testcomponents import (
@@ -15,6 +15,19 @@ def file_contents_match(filepath, str_content):
         filecontents = f.read()
     return filecontents == str_content
 
+class Settings(dict):
+    provides = ['json_settings']
+
+    def __init__(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+        self['served_static_dir'] = self.tmp
+        self['served_static_url'] = 'http://localhost:8888/'
+
+    def cleanup(self):
+        from shutil import rmtree
+        rmtree(self.tmp)
+
 class TestStaticBuilder(unittest.TestCase):
     def setUp(self):
         self.pbricks = PyramidBricks(
@@ -25,6 +38,9 @@ class TestStaticBuilder(unittest.TestCase):
             externaljs,
             externalcss
         )
+
+    def tearDown(self):
+        self.pbricks.components['json_settings'].cleanup()
 
     def testSimpleStaticCopy(self):
         establish_static_assets(self.pbricks)
