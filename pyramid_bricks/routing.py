@@ -63,3 +63,11 @@ class RouteApi:
     def route(self):
         return self._matched_routes[-1][1]
 
+def _routelist(routemap, routelist):
+    for value in routemap.values():
+        routelist.append(value)
+        _routelist(value, routelist)
+    return routelist
+
+def routelist(routemap):
+    return _routelist(routemap, [routemap])

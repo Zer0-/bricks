@@ -23,6 +23,7 @@ class TestRequestRoute(unittest.TestCase):
         self.r2 = Route(handles_subtree=True)
         self.r3 = Route()
         self.r4 = Route(handles_subtree=True)
+        self.r5 = Route()
         self.routemap = self.root + {
             'first': self.r1 + {
                 Use(int): self.r2 + {
@@ -31,7 +32,7 @@ class TestRequestRoute(unittest.TestCase):
                     }
                 }
             },
-            'not_used': Route()
+            'not_used': self.r5
         }
 
     def testRouteMatching(self):
@@ -96,6 +97,18 @@ class TestRequestRoute(unittest.TestCase):
         request = Request.blank('/first/1/one/two/second/2/three/four')
         routeapi = RouteApi(request, self.routemap)
         self.assertEqual(routeapi.relative, (('one', 'two'), ('three', 'four')))
+
+    def testRoutelist(self):
+        from pyramid_bricks.routing import routelist
+        routes = [
+            self.root,
+            self.r1,
+            self.r2,
+            self.r3,
+            self.r4,
+            self.r5
+        ]
+        self.assertEqual(routelist(self.routemap), routes)
 
 if __name__ == '__main__':
     unittest.main()
