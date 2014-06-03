@@ -52,7 +52,7 @@ class BaseMC:
     def __init__(self, *args):
         pass
 
-    def __call__(self, request):
+    def get_view(self, request):
         request.route = RouteApi(request, self.routemap)
         if request.route._matched_routes == 404:
             return HTTPNotFound()
@@ -60,7 +60,12 @@ class BaseMC:
         view = route.get_view(request)
         if view is None:
             return HTTPNotFound()
-        #permission stuff
+        return view
+
+    def __call__(self, request):
+        view = self.get_view(request)
+        if isinstance(view, HTTPException):
+            return view
         return view(request)
 
 def mc_from_routemap(routemap):
