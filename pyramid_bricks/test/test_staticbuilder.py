@@ -1,6 +1,6 @@
 import unittest
 from os.path import join
-from pyramid_bricks import PyramidBricks
+from pyramid_bricks import Bricks
 from pyramid_bricks.staticfiles import StaticManager
 from pyramid_bricks.static_builder import establish_static_assets
 from test_components.testcomponents import (
@@ -30,14 +30,16 @@ class Settings(dict):
 
 class TestStaticBuilder(unittest.TestCase):
     def setUp(self):
-        self.pbricks = PyramidBricks(
+        self.pbricks = Bricks()
+        for c in [
             Settings,
             StaticManager,
             testcss,
             testjs,
             externaljs,
             externalcss
-        )
+        ]:
+            self.pbricks.add(c)
 
     def tearDown(self):
         self.pbricks.components['json_settings'].cleanup()

@@ -68,13 +68,28 @@ class BaseMC:
             return view
         return view(request)
 
-def mc_from_routemap(routemap):
-    deps = list(routeset(routemap))
+def mc_from_routemap(routemap, base_component=BaseMC, extra_dependencies=[]):
+    if hasattr(base_component, 'depends_on'):
+        deps = base_component.depends_on
+    else:
+        deps = []
+    deps += extra_dependencies
+    deps += list(routeset(routemap))
     return type(
         "MainComponent",
-        (BaseMC,),
+        (base_component,),
         dict(routemap=routemap, depends_on=deps)
     )
 
-def app_from_routemap(routemap):
+def app_from_routemap(routemap, main_component=BaseMC, components=[]):
+    """Given a routemap (Route instance) this will create a wsgi app.
+    main_component is the component that will be responsible for all
+    requests. By default this is BaseMC which does routing and not much
+    else.
+
+    The components option should be a list of components that will get
+    appended to the depends_on attribute of the main_component to the
+    effect of them being initialized - useful if the components that render
+    views depend on something.
+    """
     return create_app(mc_from_routemap(routemap))
