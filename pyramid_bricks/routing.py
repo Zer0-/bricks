@@ -1,5 +1,48 @@
 from ceramic_forms import Form
 
+class Route:
+    def __init__(
+        self,
+        handler=None,
+        permissions=(),
+        handles_subtree=False
+    ):
+        self.routemap = dict()
+        self.permissions = permissions
+        self.handles_subtree = handles_subtree
+        if handler is not None:
+            self.depends_on = [handler]
+
+    def __call__(self, component=None):
+        self.component = component
+        return self
+
+    def get_view(self, request):
+        return getattr(self.component, request.method, None)
+
+    def values(self):
+        return self.routemap.values()
+
+    def __add__(self, subtree):
+        self.routemap.update(subtree)
+        return self
+
+    def __setitem__(self, *args, **kwargs):
+        return self.routemap.__setitem__(*args, **kwargs)
+
+    def __getitem__(self, *args, **kwargs):
+        return self.routemap.__getitem__(*args, **kwargs)
+
+    def __contains__(self, key):
+        return self.routemap.__contains__(key)
+
+    def __iter__(self):
+        for key in self.routemap:
+            yield key
+
+    def __repr__(self):
+        return "<Route {}>".format(id(self))
+
 def _match_pathpart(routemap, part):
     #wrap schema and pathpart in a list because Form cannot handle naked values.
     subject = [part]
@@ -63,11 +106,13 @@ class RouteApi:
     def route(self):
         return self._matched_routes[-1][1]
 
-def _routelist(routemap, routelist):
+def _routeset(routemap, routeset):
     for value in routemap.values():
-        routelist.append(value)
-        _routelist(value, routelist)
-    return routelist
+        routeset.add(value)
+        _routeset(value, routeset)
+    return routeset
 
-def routelist(routemap):
-    return _routelist(routemap, [routemap])
+def routeset(routemap):
+    routeset = set()
+    routeset.add(routemap)
+    return _routeset(routemap, routeset)

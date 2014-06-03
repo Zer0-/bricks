@@ -1,20 +1,7 @@
 import unittest
-from pyramid_bricks.routing import RouteApi
+from pyramid_bricks.routing import RouteApi, Route
 from webob import Request
 from ceramic_forms import Use
-
-class Route(dict):
-    def __init__(
-        self,
-        permissions=(),
-        handles_subtree=False
-    ):
-        self.permissions = permissions
-        self.handles_subtree = handles_subtree
-
-    def __add__(self, subtree):
-        self.update(subtree)
-        return self
 
 class TestRequestRoute(unittest.TestCase):
     def setUp(self):
@@ -99,7 +86,7 @@ class TestRequestRoute(unittest.TestCase):
         self.assertEqual(routeapi.relative, (('one', 'two'), ('three', 'four')))
 
     def testRoutelist(self):
-        from pyramid_bricks.routing import routelist
+        from pyramid_bricks.routing import routeset
         routes = [
             self.root,
             self.r1,
@@ -108,7 +95,9 @@ class TestRequestRoute(unittest.TestCase):
             self.r4,
             self.r5
         ]
-        self.assertEqual(routelist(self.routemap), routes)
+        found_routes = routeset(self.routemap)
+        for r in routes:
+            self.assertTrue(r in found_routes)
 
 if __name__ == '__main__':
     unittest.main()

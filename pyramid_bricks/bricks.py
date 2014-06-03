@@ -1,4 +1,5 @@
 from webob import Request
+from .routing import routeset, RouteApi
 
 class MissingConfiguration(Exception):
     pass
@@ -23,7 +24,7 @@ class Bricks:
                     "provides {} to be configured".format(
                         component_type, e.args[0]))
         if hasattr(component_type, 'depends_on'):
-            args += [self.add_component(comp_type) for
+            args += [self.add(comp_type) for
                     comp_type in component_type.depends_on]
         component = component_type(*args)
         if hasattr(component, 'provides'):
@@ -42,3 +43,25 @@ def create_app(main_component):
         return response(environ, start_response)
 
     return wsgi_app
+
+class BaseMC:
+    def __init__(self, *args):
+        pass
+
+    def __call__(self, request):
+        request.route = RouteApi(request, self.routemap)
+        #raise 404 if request.route._matched_routes == 404
+        route = request.route.route
+        view = route.get_view(request)
+        if view is None:
+            pass#raise 404
+        #permission stuff
+        return view(request)
+
+def mc_from_routemap(routemap):
+    deps = list(routeset(routemap))
+    return type(
+        "MainComponent",
+        (BaseMC,),
+        dict(routemap=routemap, depends_on=deps)
+    )
