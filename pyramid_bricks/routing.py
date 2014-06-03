@@ -106,6 +106,12 @@ class RouteApi:
     def route(self):
         return self._matched_routes[-1][1]
 
+    @property
+    def routes(self):
+        visited = set()
+        return [r for _, r in self._matched_routes\
+                    if r not in visited and not visited.add(r)]
+
 def _routeset(routemap, routeset):
     for value in routemap.values():
         routeset.add(value)

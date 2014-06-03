@@ -99,5 +99,11 @@ class TestRequestRoute(unittest.TestCase):
         for r in routes:
             self.assertTrue(r in found_routes)
 
+    def testApiRoutes(self):
+        request = Request.blank('/first/1/one/two/second/2/three/four')
+        routes = [self.root, self.r1, self.r2, self.r3, self.r4]
+        routeapi = RouteApi(request, self.routemap)
+        self.assertEqual(routeapi.routes, routes)
+
 if __name__ == '__main__':
     unittest.main()
