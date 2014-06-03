@@ -1,5 +1,9 @@
 from webob import Request
 from .routing import routeset, RouteApi
+from .httpexceptions import (
+    HTTPException,
+    HTTPNotFound
+)
 
 class MissingConfiguration(Exception):
     pass
@@ -18,14 +22,14 @@ class Bricks:
         if hasattr(component_type, 'requires_configured'):
             try:
                 args += [self.components[requirement] for requirement
-                         in component_type.requires_configured]
+                             in component_type.requires_configured]
             except KeyError as e:
                 raise MissingConfiguration("{} requires something that "
                     "provides {} to be configured".format(
                         component_type, e.args[0]))
         if hasattr(component_type, 'depends_on'):
             args += [self.add(comp_type) for
-                    comp_type in component_type.depends_on]
+                        comp_type in component_type.depends_on]
         component = component_type(*args)
         if hasattr(component, 'provides'):
             for provision in component_type.provides:
@@ -50,11 +54,12 @@ class BaseMC:
 
     def __call__(self, request):
         request.route = RouteApi(request, self.routemap)
-        #raise 404 if request.route._matched_routes == 404
+        if request.route._matched_routes == 404:
+            return HTTPNotFound()
         route = request.route.route
         view = route.get_view(request)
         if view is None:
-            pass#raise 404
+            return HTTPNotFound()
         #permission stuff
         return view(request)
 
@@ -65,3 +70,6 @@ def mc_from_routemap(routemap):
         (BaseMC,),
         dict(routemap=routemap, depends_on=deps)
     )
+
+def app_from_routemap(routemap):
+    return create_app(mc_from_routemap(routemap))
