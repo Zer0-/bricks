@@ -1,6 +1,7 @@
 from setuptools import setup
 
 requires = [
+    'webob',
     'pyramid',
     'pyramid_mako',
     'ceramic_forms'
