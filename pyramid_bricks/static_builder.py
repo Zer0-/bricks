@@ -1,4 +1,3 @@
-from pyramid.path import AssetResolver
 import os
 from os.path import join, basename, isdir
 from os import makedirs

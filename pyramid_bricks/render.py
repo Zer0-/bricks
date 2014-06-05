@@ -2,7 +2,7 @@ from pyramid.renderers import RendererHelper
 
 def render_to_response(renderer):
     def render_decorator(viewfn):
-        def wrapper(clsinst, context, request):
+        def wrapper(clsinst, request):
             view_result = viewfn(clsinst, request)
             helper = RendererHelper(name=renderer)
             context = {'component': clsinst, 'request': request}
