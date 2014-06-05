@@ -1,21 +1,26 @@
-from pyramid.renderers import RendererHelper
+from webob import Response
+from mako.template import Template
+from pyramid.path import AssetResolver
 
-def render_to_response(renderer):
+def _response(body, mime):
+    response = Response(content_type=mime)
+    response.text = body
+    return response
+
+def string_response(viewfn):
+    def wrapper(clsinst, request):
+        view_result = viewfn(clsinst, request)
+        return _response(view_result, 'text/plain')
+    return wrapper
+
+def mako_response(template_assetspec):
+    template_filepath = AssetResolver().resolve(template_assetspec).abspath()
+    template = Template(filename=template_filepath)
     def render_decorator(viewfn):
         def wrapper(clsinst, request):
             view_result = viewfn(clsinst, request)
-            helper = RendererHelper(name=renderer)
             context = {'component': clsinst, 'request': request}
-            return helper.render_to_response(view_result, context, request=request)
-        return wrapper
-    return render_decorator
-
-def render(renderer):
-    def render_decorator(viewfn):
-        def wrapper(clsinst, *args, **kwargs):
-            view_result = viewfn(clsinst, *args, **kwargs)
-            helper = RendererHelper(name=renderer)
-            context = {'component': clsinst}
-            return helper.render(view_result, context)
+            context.update(view_result)
+            return _response(template.render(**context), 'text/html')
         return wrapper
     return render_decorator
