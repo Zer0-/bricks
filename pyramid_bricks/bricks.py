@@ -66,7 +66,10 @@ class BaseMC:
         view = self.get_view(request)
         if isinstance(view, HTTPException):
             return view
-        return view(request)
+        try:
+            return view(request)
+        except HTTPException as e:
+            return e
 
 def mc_from_routemap(routemap, base_component=BaseMC, extra_dependencies=[]):
     if hasattr(base_component, 'depends_on'):
@@ -92,4 +95,4 @@ def app_from_routemap(routemap, main_component=BaseMC, components=[]):
     effect of them being initialized - useful if the components that render
     views depend on something.
     """
-    return create_app(mc_from_routemap(routemap))
+    return create_app(mc_from_routemap(routemap, main_component, components))

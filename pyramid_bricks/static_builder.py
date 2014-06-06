@@ -15,17 +15,17 @@ def copytree(src, dst, symlinks=False, ignore=None):
             if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
                 copyfile(s, d)
 
-def establish_static_assets(pbricks):
-    settings = pbricks.components.get('json_settings')
+def establish_static_assets(bricks):
+    settings = bricks.components.get('json_settings')
     if settings is None:
         raise ValueError("establish_static app to have a settings component")
-    static_manager = pbricks.components.get('static_manager')
+    static_manager = bricks.components.get('static_manager')
     asset_components = static_manager.static_components.values()
     for asset in asset_components:
         if not hasattr(asset, 'asset'):
             continue
         if asset.has_build_stage:
-            root_dir = settings.get('static_buildout_dir')
+            root_dir = settings.get('static_buildout_dir')#change to static_stage_dir
             if root_dir is None:
                 raise ValueError("No 'static_buildout_dir' setting "
                                  "found in app settings")
