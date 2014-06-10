@@ -52,6 +52,7 @@ Exception
         * 415 - HTTPUnsupportedMediaType
         * 416 - HTTPRequestRangeNotSatisfiable
         * 417 - HTTPExpectationFailed
+        * 418 - HTTPImATeapot
         * 422 - HTTPUnprocessableEntity
         * 423 - HTTPLocked
         * 424 - HTTPFailedDependency
@@ -839,6 +840,21 @@ class HTTPExpectationFailed(HTTPClientError):
     code = 417
     title = 'Expectation Failed'
     explanation = ('Expectation failed.')
+
+class HTTPImATeapot(HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    TEA-capable pots that are not provisioned to brew coffee may return
+    either a status code of 503, indicating temporary unavailability of
+    coffee, or a code of 418 as defined in the base HTCPCP specification
+    to denote a more permanent indication that the pot is a teapot.
+    
+    code: 418, title: I'm A Teapot
+    """
+    code = 418
+    title = "I'm A Teapot"
+    explanation = ('The HTTP server is a teapot')
 
 class HTTPUnprocessableEntity(HTTPClientError):
     """
