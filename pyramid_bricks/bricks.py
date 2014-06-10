@@ -37,8 +37,10 @@ class Bricks:
         self.components[component_type] = component
         return component
 
-def create_app(main_component):
+def create_app(main_component, dependencies=[]):
     bricks = Bricks()
+    for component in dependencies:
+        bricks.add(component)
     main = bricks.add(main_component)
 
     def wsgi_app(environ, start_response):
@@ -71,12 +73,10 @@ class BaseMC:
         except HTTPException as e:
             return e
 
-def mc_from_routemap(routemap, base_component=BaseMC, extra_dependencies=[]):
+def mc_from_routemap(routemap, base_component=BaseMC):
+    deps = []
     if hasattr(base_component, 'depends_on'):
-        deps = base_component.depends_on
-    else:
-        deps = []
-    deps += extra_dependencies
+        deps += base_component.depends_on
     deps += list(routeset(routemap))
     return type(
         "MainComponent",
@@ -95,4 +95,4 @@ def app_from_routemap(routemap, main_component=BaseMC, components=[]):
     effect of them being initialized - useful if the components that render
     views depend on something.
     """
-    return create_app(mc_from_routemap(routemap, main_component, components))
+    return create_app(mc_from_routemap(routemap, main_component), components)
