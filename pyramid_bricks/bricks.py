@@ -1,4 +1,4 @@
-from webob import Request
+from webob import Request, Response
 from .routing import routeset, RouteApi
 from .httpexceptions import (
     HTTPException,
@@ -45,7 +45,13 @@ def create_app(main_component, dependencies=[]):
 
     def wsgi_app(environ, start_response):
         request = Request(environ)
-        response = main(request)
+        response = Response()
+        try:
+            result = main(request, response)
+        except HTTPException as e:
+            response = e
+        if isinstance(result, Response):
+            response = result
         return response(environ, start_response)
 
     return wsgi_app
@@ -54,24 +60,23 @@ class BaseMC:
     def __init__(self, *args):
         pass
 
+    @staticmethod
+    def not_found_view(*args):
+        return HTTPNotFound()
+
     def get_view(self, request):
         request.route = RouteApi(request, self.routemap)
         if request.route._matched_routes == 404:
-            return HTTPNotFound()
+            return self.not_found_view
         route = request.route.route
         view = route.get_view(request)
         if view is None:
-            return HTTPNotFound()
+            return self.not_found_view
+        route = request.route.route
         return view
 
-    def __call__(self, request):
-        view = self.get_view(request)
-        if isinstance(view, HTTPException):
-            return view
-        try:
-            return view(request)
-        except HTTPException as e:
-            return e
+    def __call__(self, request, response):
+        return self.get_view(request)(request, response)
 
 def mc_from_routemap(routemap, base_component=BaseMC):
     deps = []

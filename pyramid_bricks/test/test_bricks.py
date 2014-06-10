@@ -1,21 +1,19 @@
 import unittest
 from webob import Request
-from pyramid_bricks.bricks import create_app
+from pyramid_bricks.bricks import create_app, app_from_routemap
 from pyramid_bricks.routing import Route
-
-def _hworld():
-    from webob import Response
-    response = Response()
-    response.text = "hello world"
-    return response
+from pyramid_bricks.httpexceptions import HTTPForbidden
 
 class MockMain:
-    def __call__(self, request):
-        return _hworld()
+    def __call__(self, request, response):
+        response.text = "hello world"
 
 class MockComponent:
-    def GET(self, request):
-        return _hworld()
+    def GET(self, request, response):
+        response.text = "hello world"
+
+    def POST(self, request, response):
+        return HTTPForbidden()
 
 class TestAppCreation(unittest.TestCase):
     def testAppCreation(self):
@@ -50,12 +48,20 @@ class TestAppCreation(unittest.TestCase):
         create_app(main_component)
 
     def testAll(self):
-        from pyramid_bricks.bricks import app_from_routemap
         routemap = Route(handler=MockComponent)
         app = app_from_routemap(routemap)
         req = Request.blank('/')
         res = req.get_response(app)
         self.assertEqual(res.body, b'hello world')
+
+    def testHttpException(self):
+        routemap = Route(handler=MockComponent)
+        app = app_from_routemap(routemap)
+        req = Request.blank('/')
+        req.method = 'POST'
+        res = req.get_response(app)
+        body = str(res.body).lower()
+        self.assertTrue('forbidden' in body)
 
 if __name__ == '__main__':
     unittest.main()
