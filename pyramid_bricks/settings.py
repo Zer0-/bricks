@@ -29,5 +29,10 @@ class Settings(dict):
             here = os.path.dirname(__file__)
         if location is None:
             location = here
-        self.update(read_settings(location))
+        try:
+            settings = read_settings(location)
+        except IOError:
+            location = os.getcwd()
+            settings = read_settings(location)
+        self.update(settings)
         self['project_dir'] = here
