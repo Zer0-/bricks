@@ -6,11 +6,11 @@ from ceramic_forms import Use
 class TestRequestRoute(unittest.TestCase):
     def setUp(self):
         self.root = Route()
-        self.r1 = Route()
-        self.r2 = Route(handles_subtree=True)
-        self.r3 = Route()
-        self.r4 = Route(handles_subtree=True)
-        self.r5 = Route()
+        self.r1 = Route(handler=object())
+        self.r2 = Route(handler=object(), handles_subtree=True)
+        self.r3 = Route(handler=object())
+        self.r4 = Route(handler=object(), handles_subtree=True)
+        self.r5 = Route(handler=object())
         self.routemap = self.root + {
             'first': self.r1 + {
                 Use(int): self.r2 + {
