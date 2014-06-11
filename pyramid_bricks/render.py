@@ -1,5 +1,6 @@
 from mako.template import Template
 from pyramid.path import AssetResolver
+from pyramid_mako import PkgResourceTemplateLookup
 
 def string_response(viewfn):
     def wrapper(clsinst, request, response):
@@ -18,14 +19,15 @@ def json_response(viewfn):
 
 def mako_response(template_assetspec):
     template_filepath = AssetResolver().resolve(template_assetspec).abspath()
-    template = Template(filename=template_filepath)
+    template = Template(filename=template_filepath,
+                        lookup=PkgResourceTemplateLookup())
     def render_decorator(viewfn):
         def wrapper(clsinst, request, response):
             view_result = viewfn(clsinst, request, response)
             context = {'component': clsinst, 'request': request}
             context.update(view_result)
             body = template.render(**context)
-            response.body = body
+            response.text = body
             response.content_type = 'text/html'
         return wrapper
     return render_decorator
