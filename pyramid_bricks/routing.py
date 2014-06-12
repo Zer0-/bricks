@@ -16,7 +16,6 @@ class Route:
         self.depends_on = [handler] if handler is not None else []
         self.exc_handlers = getattr(self, 'httpexception_handlers', {})
         self.exc_handlers.update(httpexception_handlers)
-        self.depends_on += list(self.exc_handlers.values())
 
     def __call__(self, component=None):
         self.component = component
