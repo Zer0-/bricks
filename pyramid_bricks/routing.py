@@ -14,11 +14,16 @@ class Route:
         self.handles_subtree = handles_subtree
         self.handler = handler
         self.depends_on = [handler] if handler is not None else []
+        self.depends_on += list(routemap.values())
         self.exc_handlers = getattr(self, 'httpexception_handlers', {})
         self.exc_handlers.update(httpexception_handlers)
+        self._original_exc_handlers = frozenset(self.exc_handlers.items())
+        self.depends_on += list(self.exc_handlers.values())
 
-    def __call__(self, component=None):
-        self.component = component
+    def __call__(self, *deps):
+        self.component = None if self.handler is None else deps[0]
+        for i, (http_exc, handler) in enumerate(self.exc_handlers.items()):
+            self.exc_handlers[http_exc] = deps[1+len(self.routemap)+i]
         return self
 
     def get_view(self, request):
@@ -32,17 +37,23 @@ class Route:
             self.handler,
             self.permissions,
             self.handles_subtree,
-            self.exc_handlers
+            self._original_exc_handlers
         )
 
     def __add__(self, routemap):
-        return Route(*self._defining_attributes() + (routemap,))
+        return Route(
+            handler=self.handler,
+            permissions=self.permissions,
+            handles_subtree=self.handles_subtree,
+            httpexception_handlers=dict(self._original_exc_handlers),
+            routemap=routemap
+        )
 
     def __eq__(self, other):
         return self._defining_attributes() == other._defining_attributes()
 
     def __hash__(self):
-        return hash((tuple(self.depends_on), self.handles_subtree, self.permissions))
+        return hash(self._defining_attributes())
 
     def __setitem__(self, *args, **kwargs):
         return self.routemap.__setitem__(*args, **kwargs)
@@ -58,7 +69,7 @@ class Route:
             yield key
 
     def __repr__(self):
-        return "<Route {}>".format(id(self))
+        return "<Route {}>".format(hash(self))
 
 def _match_pathpart(routemap, part):
     #wrap schema and pathpart in a list because Form cannot handle naked values.

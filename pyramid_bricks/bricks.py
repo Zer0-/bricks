@@ -42,12 +42,6 @@ def create_app(main_component, dependencies=[], routemap=None):
     for component in dependencies:
         bricks.add(component)
     main = bricks.add(main_component)
-    if routemap is not None:
-        for route in routeset(routemap):
-            route = bricks.add(route)
-            for http_exc, handler in route.exc_handlers.items():
-                handler = bricks.add(handler)
-                route.exc_handlers[http_exc] = handler
 
     def wsgi_app(environ, start_response):
         request = Request(environ)
