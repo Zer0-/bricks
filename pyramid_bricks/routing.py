@@ -6,18 +6,19 @@ class Route:
         handler=None,
         permissions=(),
         handles_subtree=False,
+        httpexception_handlers=dict(),
         routemap=dict(),
-        httpexception_handlers=dict()
     ):
         self.routemap = routemap
         self.permissions = permissions
         self.handles_subtree = handles_subtree
+        self.handler = handler
         self.depends_on = [handler] if handler is not None else []
-        exc_handlers = getattr(self, 'httpexception_handlers', {})
-        exc_handlers.update(httpexception_handlers)
-        self.depends_on += list(exc_handlers.values())
+        self.exc_handlers = getattr(self, 'httpexception_handlers', {})
+        self.exc_handlers.update(httpexception_handlers)
+        self.depends_on += list(self.exc_handlers.values())
 
-    def __call__(self, component=None, *args):
+    def __call__(self, component=None):
         self.component = component
         return self
 
@@ -27,18 +28,19 @@ class Route:
     def values(self):
         return self.routemap.values()
 
-    def __add__(self, routemap):
-        return Route(
-            self.depends_on[0] if self.depends_on else None,
+    def _defining_attributes(self):
+        return (
+            self.handler,
             self.permissions,
             self.handles_subtree,
-            routemap
+            self.exc_handlers
         )
 
+    def __add__(self, routemap):
+        return Route(*self._defining_attributes() + (routemap,))
+
     def __eq__(self, other):
-        return self.depends_on == other.depends_on and\
-                self.handles_subtree == other.handles_subtree and\
-                self.permissions == other.permissions
+        return self._defining_attributes() == other._defining_attributes()
 
     def __hash__(self):
         return hash((tuple(self.depends_on), self.handles_subtree, self.permissions))

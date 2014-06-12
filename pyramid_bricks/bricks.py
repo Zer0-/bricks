@@ -37,11 +37,17 @@ class Bricks:
         self.components[component_type] = component
         return component
 
-def create_app(main_component, dependencies=[]):
+def create_app(main_component, dependencies=[], routemap=None):
     bricks = Bricks()
     for component in dependencies:
         bricks.add(component)
     main = bricks.add(main_component)
+    if routemap is not None:
+        for route in routeset(routemap):
+            route = bricks.add(route)
+            for http_exc, handler in route.exc_handlers.items():
+                handler = bricks.add(handler)
+                route.exc_handlers[http_exc] = handler
 
     def wsgi_app(environ, start_response):
         request = Request(environ)
@@ -49,19 +55,16 @@ def create_app(main_component, dependencies=[]):
         try:
             result = main(request, response)
         except HTTPException as e:
+            result = e
+        if isinstance(result, HTTPException):
             #check the current Route for components that handle HTTPExceptions
             #be careful - since the main component is responsible for attaching
             #the route api to the request, request.route may not exist.
-            exception_handlers = getattr(
-                request.route.route,
-                'httpexception_handlers',
-                {}
-            )
-            err_handler = exception_handlers.get(type(e), {})
+            exception_handlers = request.route.route.exc_handlers
+            err_handler = exception_handlers.get(type(result), {})
             err_view = getattr(err_handler, request.method, None)
-            if err_view is None:
-                return e(environ, start_response)
-            return err_view(request, response)
+            if err_view is not None:
+                result = err_view(request, response)
         if isinstance(result, Response):
             response = result
         return response(environ, start_response)
@@ -70,7 +73,7 @@ def create_app(main_component, dependencies=[]):
 
 class BaseMC:
     def __init__(self, *args):
-        pass
+        self.routemap = args[-1]
 
     @staticmethod
     def not_found_view(*args):
@@ -94,11 +97,11 @@ def mc_from_routemap(routemap, base_component=BaseMC):
     deps = []
     if hasattr(base_component, 'depends_on'):
         deps += base_component.depends_on
-    deps += list(routeset(routemap))
+    deps.append(routemap)
     return type(
         "MainComponent",
         (base_component,),
-        dict(routemap=routemap, depends_on=deps)
+        dict(depends_on=deps)
     )
 
 def app_from_routemap(routemap, main_component=BaseMC, components=[]):
@@ -112,4 +115,4 @@ def app_from_routemap(routemap, main_component=BaseMC, components=[]):
     effect of them being initialized - useful if the components that render
     views depend on something.
     """
-    return create_app(mc_from_routemap(routemap, main_component), components)
+    return create_app(mc_from_routemap(routemap, main_component), components, routemap)
