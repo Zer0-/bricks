@@ -49,7 +49,19 @@ def create_app(main_component, dependencies=[]):
         try:
             result = main(request, response)
         except HTTPException as e:
-            response = e
+            #check the current Route for components that handle HTTPExceptions
+            #be careful - since the main component is responsible for attaching
+            #the route api to the request, request.route may not exist.
+            exception_handlers = getattr(
+                request.route.route,
+                'httpexception_handlers',
+                {}
+            )
+            err_handler = exception_handlers.get(type(e), {})
+            err_view = getattr(err_handler, request.method, None)
+            if err_view is None:
+                return e(environ, start_response)
+            return err_view(request, response)
         if isinstance(result, Response):
             response = result
         return response(environ, start_response)

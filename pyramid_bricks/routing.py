@@ -6,14 +6,18 @@ class Route:
         handler=None,
         permissions=(),
         handles_subtree=False,
-        routemap=dict()
+        routemap=dict(),
+        httpexception_handlers=dict()
     ):
         self.routemap = routemap
         self.permissions = permissions
         self.handles_subtree = handles_subtree
         self.depends_on = [handler] if handler is not None else []
+        exc_handlers = getattr(self, 'httpexception_handlers', {})
+        exc_handlers.update(httpexception_handlers)
+        self.depends_on += list(exc_handlers.values())
 
-    def __call__(self, component=None):
+    def __call__(self, component=None, *args):
         self.component = component
         return self
 
