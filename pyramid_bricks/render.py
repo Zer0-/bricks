@@ -14,7 +14,7 @@ def json_response(viewfn):
     def wrapper(clsinst, request, response):
         view_result = viewfn(clsinst, request, response)
         response.content_type = 'application/json'
-        response.text = view_result
+        response.text = dumps(view_result)
     return wrapper
 
 def mako_response(template_assetspec):

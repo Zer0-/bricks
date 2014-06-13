@@ -50,7 +50,7 @@ def create_app(main_component, dependencies=[], routemap=None):
             result = main(request, response)
         except HTTPException as e:
             result = e
-        if isinstance(result, HTTPException):
+        if isinstance(result, HTTPException) and request.route._matched_routes != 404:
             #check the current Route for components that handle HTTPExceptions
             #be careful - since the main component is responsible for attaching
             #the route api to the request, request.route may not exist.
@@ -69,19 +69,14 @@ class BaseMC:
     def __init__(self, *args):
         self.routemap = args[-1]
 
-    @staticmethod
-    def not_found_view(*args):
-        return HTTPNotFound()
-
     def get_view(self, request):
         request.route = RouteApi(request, self.routemap)
         if request.route._matched_routes == 404:
-            return self.not_found_view
+            raise HTTPNotFound()
         route = request.route.route
         view = route.get_view(request)
         if view is None:
-            return self.not_found_view
-        route = request.route.route
+            raise HTTPNotFound()
         return view
 
     def __call__(self, request, response):
