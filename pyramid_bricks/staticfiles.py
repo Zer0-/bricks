@@ -1,5 +1,5 @@
 from os.path import join, basename
-from pyramid.path import AssetResolver
+from .asset import resolve_spec
 from .component import CustomComponent
 
 class StaticManager:
@@ -37,7 +37,7 @@ class StaticFile(CustomComponent):
     def __init__(self, static_manager, settings):
         static_manager.add(self)
         self.static_url = settings['served_static_url']
-        self.asset_path = AssetResolver().resolve(self.asset).abspath()
+        self.asset_path = resolve_spec(self.asset)
 
     def get_url(self):
         return self.static_url +\
