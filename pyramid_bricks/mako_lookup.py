@@ -12,6 +12,7 @@ from mako.exceptions import (
     TopLevelLookupException,
     text_error_template,
 )
+from .asset import resolve_spec
 
 class ResourceTemplateLookup(TemplateLookup):
     """TemplateLookup subclass that handles asset specification URIs"""
@@ -58,10 +59,9 @@ class ResourceTemplateLookup(TemplateLookup):
                 else:
                     return self._collection[adjusted]
             except KeyError:
-                asset = AssetResolver().resolve(uri)
-                if asset.exists():
-                    srcfile = asset.abspath()
-                    return self._load(srcfile, adjusted)
+                asset = resolve_spec(uri)
+                if os.path.exists(asset):
+                    return self._load(asset, adjusted)
                 raise TopLevelLookupException(
                     "Can not locate template for uri %r" % uri)
         try:
