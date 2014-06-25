@@ -3,7 +3,8 @@ from setuptools import setup
 requires = [
     'setuptools',
     'webob',
-    'ceramic_forms'
+    'ceramic_forms',
+    'mako'
 ]
 
 links = [
