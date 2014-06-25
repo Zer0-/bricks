@@ -95,9 +95,9 @@ class TestRequestRoute(unittest.TestCase):
             self.r4,
             self.r5
         ]
+        routes = set(routes)
         found_routes = routeset(self.routemap)
-        for r in routes:
-            self.assertTrue(r in found_routes)
+        self.assertEqual(found_routes, routes)
 
     def testApiRoutes(self):
         request = Request.blank('/first/1/one/two/second/2/three/four')

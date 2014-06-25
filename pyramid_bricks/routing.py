@@ -32,6 +32,9 @@ class Route:
     def values(self):
         return self.routemap.values()
 
+    def items(self):
+        return self.routemap.items()
+
     def _defining_attributes(self):
         return (
             self.handler,
@@ -140,13 +143,10 @@ class RouteApi:
         return [r for _, r in self._matched_routes\
                     if r not in visited and not visited.add(r)]
 
-def _routeset(routemap, routeset):
-    for value in routemap.values():
-        routeset.add(value)
-        _routeset(value, routeset)
-    return routeset
+def iter_routemap(routemap, path=[]):
+    yield path, routemap
+    for pathpart, route in routemap.items():
+        yield from iter_routemap(route, path + [pathpart])
 
 def routeset(routemap):
-    routeset = set()
-    routeset.add(routemap)
-    return _routeset(routemap, routeset)
+    return set(i for _, i in iter_routemap(routemap))
