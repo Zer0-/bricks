@@ -72,7 +72,18 @@ class Route:
             yield key
 
     def __repr__(self):
-        return "<Route {}>".format(hash(self))
+        info = []
+        if self.permissions:
+            info.append('permissions: ' + str(self.permissions))
+        if self.routemap:
+            info.append('contains {} routes'.format(len(self.routemap)))
+        if self.exc_handlers:
+            info.append("handles exceptions: True")
+        return "<{} handler: {}{}>".format(
+            self.__class__.__name__,
+            self.handler,
+            ", " + ", ".join(info) if info else ""
+        )
 
 def _match_pathpart(routemap, part):
     #wrap schema and pathpart in a list because Form cannot handle naked values.
