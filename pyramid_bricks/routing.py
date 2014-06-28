@@ -143,6 +143,38 @@ class RouteApi:
         return [r for _, r in self._matched_routes\
                     if r not in visited and not visited.add(r)]
 
+    def find(self, route, path_args=()):
+        def match(path):
+            return len([i for i in path if not isinstance(i, str)]) == \
+                    len(path_args)
+
+        for path, existing_route in iter_routemap(self.routemap):
+            if route == existing_route:
+                arg_iter = iter(path_args)
+                if route.handles_subtree:
+                    arg_iter = arg_iter
+                    filled_path = _fill_path(path, arg_iter)
+                    if filled_path is False:
+                        continue
+                    return filled_path + list(arg_iter)
+                elif match(path):
+                    filled_path = _fill_path(path, arg_iter)
+                    if filled_path is False:
+                        continue
+                    return filled_path
+
+def _fill_path(path, path_args):
+    filled_path = []
+    for pathpart in path:
+        if isinstance(pathpart, str):
+            filled_path.append(pathpart)
+        else:
+            validator = Form([pathpart])
+            if not validator.validate([next(path_args)]):
+                return False
+            filled_path.append(validator.cleaned[0])
+    return filled_path
+
 def iter_routemap(routemap, path=[]):
     yield path, routemap
     for pathpart, route in routemap.items():

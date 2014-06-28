@@ -1,7 +1,7 @@
 import unittest
 from pyramid_bricks.routing import RouteApi, Route
 from webob import Request
-from ceramic_forms import Use
+from ceramic_forms import Use, And
 
 class TestRequestRoute(unittest.TestCase):
     def setUp(self):
@@ -104,6 +104,53 @@ class TestRequestRoute(unittest.TestCase):
         routes = [self.root, self.r1, self.r2, self.r3, self.r4]
         routeapi = RouteApi(request, self.routemap)
         self.assertEqual(routeapi.routes, routes)
+
+class TestPathFinding(unittest.TestCase):
+    def setUp(self):
+        p_one = Route()
+        r = Route(handler=object())
+        self.routemap = r + {
+            'one': r,
+            'const_one': p_one,
+            'two': r + {
+                'a' : r + {
+                    Use(int): r,
+                    'six': r
+                },
+                str: r + {
+                    And(Use(int), lambda x: x%2 == 0): r + {
+                        'wot': r,
+                        'const_two': p_one
+                    },
+                    lambda x: len(x) == 4: p_one,
+                    And(Use(int), lambda x: x%2 != 0): p_one
+                }
+            }
+        }
+        self.p_one = p_one
+
+    def testRouteLookup(self):
+        request = Request.blank('')
+        api = RouteApi(request, self.routemap)
+        for path_args, path in [
+            ((), ['const_one']),
+            (('two', 'four'), ['two', 'two', 'four']),
+            (('two', '216'), ['two', 'two', 216, 'const_two']),
+            (('two', 216), ['two', 'two', 216, 'const_two']),
+            (('two', 11), ['two', 'two', 11]),
+        ]:
+            found = api.find(self.p_one, path_args)
+            self.assertEqual(path, found)
+
+    def testRouteLookupFailure(self):
+        request = Request.blank('')
+        api = RouteApi(request, self.routemap)
+        for path_args in [
+            ('wot',),
+            ('three', 'six'),
+        ]:
+            path = api.find(self.p_one, path_args)
+            self.assertEqual(path, None)
 
 if __name__ == '__main__':
     unittest.main()
