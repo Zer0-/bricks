@@ -1,6 +1,6 @@
-from pyramid_bricks.staticfiles import StaticCss, StaticJs, ExternalCss, ExternalJs
+from bricks.staticfiles import StaticCss, StaticJs, ExternalCss, ExternalJs
 
-asset_prefix = 'pyramid_bricks:test/test_components/static/'
+asset_prefix = 'bricks:test/test_components/static/'
 
 testcss = StaticCss('testcss', asset=asset_prefix + 'css/style.css')
 testjs = StaticJs('jstest', asset=asset_prefix + 'js/what.js')

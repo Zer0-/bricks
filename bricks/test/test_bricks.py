@@ -1,8 +1,8 @@
 import unittest
 from webob import Request
-from pyramid_bricks.bricks import create_app, app_from_routemap
-from pyramid_bricks.routing import Route
-from pyramid_bricks.httpexceptions import HTTPForbidden
+from bricks.app_bricks import create_app, app_from_routemap
+from bricks.routing import Route
+from bricks.httpexceptions import HTTPForbidden
 
 class MockMain:
     def __call__(self, request, response):
@@ -23,7 +23,7 @@ class TestAppCreation(unittest.TestCase):
         self.assertEqual(response.body, b"hello world")
 
     def testMainComponentCreation(self):
-        from pyramid_bricks.bricks import BaseMC, mc_from_routemap
+        from bricks.app_bricks import BaseMC, mc_from_routemap
 
         root = Route()
         r1 = Route()

@@ -1,5 +1,5 @@
 import unittest
-from pyramid_bricks.routing import RouteApi, Route
+from bricks.routing import RouteApi, Route
 from webob import Request
 from ceramic_forms import Use, And
 
@@ -86,7 +86,7 @@ class TestRequestRoute(unittest.TestCase):
         self.assertEqual(routeapi.relative, (('one', 'two'), ('three', 'four')))
 
     def testRoutelist(self):
-        from pyramid_bricks.routing import routeset
+        from bricks.routing import routeset
         routes = [
             self.root,
             self.r1,

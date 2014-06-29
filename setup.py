@@ -12,7 +12,7 @@ links = [
 ]
 
 setup(
-    name='pyramid_bricks',
+    name='bricks',
     version='0.0',
     description='Creation of small, extendable web components.',
     classifiers=[
@@ -22,7 +22,7 @@ setup(
     ],
     author='Philipp Volguine',
     author_email='phil.volguine@gmail.com',
-    packages=['pyramid_bricks'],
+    packages=['bricks'],
     include_package_data=True,
     install_requires=requires,
     dependency_links=links,

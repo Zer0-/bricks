@@ -1,5 +1,5 @@
 import unittest
-from pyramid_bricks.render import mako_response, string_response, json_response
+from bricks.render import mako_response, string_response, json_response
 
 class MockResponse:
     pass
@@ -10,7 +10,7 @@ class TestRendering(unittest.TestCase):
 
     def testMakoResponse(self):
 
-        @mako_response("pyramid_bricks:test/test_data/templates/template.mako")
+        @mako_response("bricks:test/test_data/templates/template.mako")
         def mako(_, request, response):
             return {}
 
