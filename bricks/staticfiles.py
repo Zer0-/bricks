@@ -1,6 +1,6 @@
 from os.path import join, basename
 from .asset import resolve_spec
-from .component import CustomComponent
+from .custom import customizable
 
 class StaticManager:
     provides = ['static_manager']
@@ -23,7 +23,7 @@ class StaticManager:
              for dep in getattr(component, 'depends_on', [])]
         )
 
-class StaticFile(CustomComponent):
+class StaticFile(metaclass=customizable):
     """Static asset that's part of a component (served locally)
     For things like coffeescript or sass that need to be compiled,
     'has_build_stage' should be set to True.
@@ -64,7 +64,7 @@ class StaticJs(StaticFile):
     def __call__(self):
         return _js(self.get_url())
 
-class ExternalStatic(CustomComponent):
+class ExternalStatic(metaclass=customizable):
     custom_attributes = ('url',)
     requires_configured = ['static_manager']
 

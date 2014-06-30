@@ -18,7 +18,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
 def establish_static_assets(bricks):
     settings = bricks.components.get('json_settings')
     if settings is None:
-        raise ValueError("establish_static app to have a settings component")
+        raise ValueError("Settings not loaded into bricks app, cannot establish static assets.")
     static_manager = bricks.components.get('static_manager')
     asset_components = static_manager.static_components.values()
     for asset in asset_components:
