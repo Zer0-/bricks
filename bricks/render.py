@@ -19,8 +19,11 @@ def json_response(viewfn):
 
 def mako_response(template_assetspec):
     template_filepath = resolve_spec(template_assetspec)
-    template = Template(filename=template_filepath,
-                        lookup=ResourceTemplateLookup())
+    template = Template(
+        filename=template_filepath,
+        lookup=ResourceTemplateLookup(),
+        input_encoding='utf-8',
+    )
     def render_decorator(viewfn):
         def wrapper(clsinst, request, response):
             view_result = viewfn(clsinst, request, response)
@@ -29,5 +32,21 @@ def mako_response(template_assetspec):
             body = template.render(**context)
             response.text = body
             response.content_type = 'text/html'
+        return wrapper
+    return render_decorator
+
+def mako_render(template_assetspec):
+    template_filepath = resolve_spec(template_assetspec)
+    template = Template(
+        filename=template_filepath,
+        lookup=ResourceTemplateLookup(),
+        input_encoding='utf-8',
+    )
+    def render_decorator(viewfn):
+        def wrapper(clsinst, *args, **kwargs):
+            view_result = viewfn(clsinst, *args, **kwargs)
+            context = {'component': clsinst, 'request': request}
+            context.update(view_result)
+            return template.render(**context)
         return wrapper
     return render_decorator

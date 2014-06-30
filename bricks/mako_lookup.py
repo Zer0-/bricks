@@ -35,7 +35,12 @@ class ResourceTemplateLookup(TemplateLookup):
                 return '{0}:{1}'.format(pkg, _uri)
             if not(':' in uri) and not(':' in relativeto):
                 return posixpath.join(posixpath.dirname(relativeto), uri)
-        return TemplateLookup.adjust_uri(self, uri, relativeto)
+        return TemplateLookup.adjust_uri(
+            self,
+            uri,
+            relativeto,
+            input_encoding='utf-8'
+        )
 
     def get_template(self, uri):
         """Fetch a template from the cache, or check the filesystem
