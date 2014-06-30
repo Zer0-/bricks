@@ -32,7 +32,7 @@ def establish_static_assets(bricks):
         else:
             root_dir = settings.get('served_static_dir')
             if root_dir is None:
-                raise ValueError("No 'static_buildout_dir' setting "
+                raise ValueError("No 'served_static_dir' setting "
                                  "found in app settings")
         filename = basename(asset.asset_path)
         dest = join(root_dir, asset.relpath)

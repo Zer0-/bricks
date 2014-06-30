@@ -66,5 +66,20 @@ class TestCustomClass(unittest.TestCase):
 
         self.assertEqual(C().silly(), 'spans')
 
+    def testMySubclass(self):
+        class V(metaclass=customizable):
+            custom_attributes = ('m',)
+            thing = 'television'
+
+        class M(V):
+            thing = 'popcorn'
+
+        class N(M):
+            pass
+
+        self.assertEqual(V('myV', m='asdf').thing, 'television')
+        self.assertEqual(N('myN', m='asdf').thing, 'popcorn')
+        self.assertEqual(N('myN', m='asdf')().thing, 'popcorn')
+
 if __name__ == '__main__':
     unittest.main()
