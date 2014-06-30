@@ -5,7 +5,6 @@ def customizable(name, bases, namespace):
     else:
         custom_attributes = ()
     new_namespace = namespace.copy()
-    old_new = type(name, bases, namespace).__new__
     def customnew(cls, name, **kwargs):
         try:
             new_attributes = {custom_attr: kwargs[custom_attr]
