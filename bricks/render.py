@@ -45,7 +45,7 @@ def mako_render(template_assetspec):
     def render_decorator(viewfn):
         def wrapper(clsinst, *args, **kwargs):
             view_result = viewfn(clsinst, *args, **kwargs)
-            context = {'component': clsinst, 'request': request}
+            context = {'component': clsinst}
             context.update(view_result)
             return template.render(**context)
         return wrapper
