@@ -107,8 +107,8 @@ class TestRequestRoute(unittest.TestCase):
 
 class TestPathFinding(unittest.TestCase):
     def setUp(self):
-        p_one = Route()
-        r = Route(handler=object())
+        p_one = Route(name='of_interest')
+        r = Route(name='ignore')
         self.routemap = r + {
             'one': r,
             'const_one': p_one,
@@ -139,7 +139,7 @@ class TestPathFinding(unittest.TestCase):
             (('two', 216), ['two', 'two', 216, 'const_two']),
             (('two', 11), ['two', 'two', 11]),
         ]:
-            found = api.find(self.p_one, path_args)
+            found = api.find(self.p_one.name, path_args)
             self.assertEqual(path, found)
 
     def testRouteLookupFailure(self):
@@ -149,7 +149,7 @@ class TestPathFinding(unittest.TestCase):
             ('wot',),
             ('three', 'six'),
         ]:
-            path = api.find(self.p_one, path_args)
+            path = api.find(self.p_one.name, path_args)
             self.assertEqual(path, None)
 
 if __name__ == '__main__':

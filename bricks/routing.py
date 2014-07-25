@@ -3,12 +3,14 @@ from ceramic_forms import Form
 class Route:
     def __init__(
         self,
+        name=None,
         handler=None,
         permissions=(),
         handles_subtree=False,
         httpexception_handlers=dict(),
         routemap=dict(),
     ):
+        self.name = name
         self.routemap = routemap
         self.permissions = permissions
         self.handles_subtree = handles_subtree
@@ -37,6 +39,7 @@ class Route:
 
     def _defining_attributes(self):
         return (
+            self.name,
             self.handler,
             self.permissions,
             self.handles_subtree,
@@ -73,6 +76,8 @@ class Route:
 
     def __repr__(self):
         info = []
+        if self.name:
+            info.append('name: {}'.format(self.name))
         if self.permissions:
             info.append('permissions: ' + str(self.permissions))
         if self.routemap:
@@ -154,15 +159,15 @@ class RouteApi:
         return [r for _, r in self._matched_routes\
                     if r not in visited and not visited.add(r)]
 
-    def find(self, route, path_args=()):
+    def find(self, routename, path_args=()):
         def match(path):
             return len([i for i in path if not isinstance(i, str)]) == \
                     len(path_args)
 
         for path, existing_route in iter_routemap(self.routemap):
-            if route == existing_route:
+            if routename == existing_route.name:
                 arg_iter = iter(path_args)
-                if route.handles_subtree:
+                if existing_route.handles_subtree:
                     arg_iter = arg_iter
                     filled_path = _fill_path(path, arg_iter)
                     if filled_path is False:
