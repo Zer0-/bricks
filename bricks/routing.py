@@ -48,6 +48,7 @@ class Route:
 
     def __add__(self, routemap):
         return Route(
+            name=self.name,
             handler=self.handler,
             permissions=self.permissions,
             handles_subtree=self.handles_subtree,
@@ -78,16 +79,17 @@ class Route:
         info = []
         if self.name:
             info.append('name: {}'.format(self.name))
+        if self.handler:
+            info.append('handler: {}'.format(self.handler.__name__))
         if self.permissions:
             info.append('permissions: ' + str(self.permissions))
         if self.routemap:
             info.append('contains {} routes'.format(len(self.routemap)))
         if self.exc_handlers:
             info.append("handles exceptions: True")
-        return "<{} handler: {}{}>".format(
+        return "<{} {}>".format(
             self.__class__.__name__,
-            self.handler,
-            ", " + ", ".join(info) if info else ""
+            ", ".join(info) if info else ""
         )
 
 def _match_pathpart(routemap, part):
