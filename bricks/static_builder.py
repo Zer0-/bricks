@@ -1,5 +1,5 @@
 import os
-from os.path import join, basename, isdir
+from os.path import join, basename, isdir, exists
 from os import makedirs
 from shutil import copyfile
 
@@ -36,7 +36,8 @@ def establish_static_assets(bricks):
                                  "found in app settings")
         filename = basename(asset.asset_path)
         dest = join(root_dir, asset.relpath)
-        makedirs(dest, exist_ok=True)
+        if not exists(dest):
+            makedirs(dest, exist_ok=True)
         if isdir(asset.asset_path):
             copytree(asset.asset_path, join(dest, filename))
         else:
