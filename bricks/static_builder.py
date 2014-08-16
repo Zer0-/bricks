@@ -2,6 +2,7 @@ import os
 from os.path import join, basename, isdir, exists
 from os import makedirs
 from shutil import copyfile
+import logging
 
 def copytree(src, dst, symlinks=False, ignore=None):
     if not os.path.exists(dst):
@@ -13,6 +14,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
             copytree(s, d, symlinks, ignore)
         else:
             if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
+                logging.debug("{} -> {}".format(s, d))
                 copyfile(s, d)
 
 def establish_static_assets(bricks):
@@ -38,7 +40,9 @@ def establish_static_assets(bricks):
         dest = join(root_dir, asset.relpath)
         if not exists(dest):
             makedirs(dest, exist_ok=True)
+        outfilepath = join(dest, filename)
         if isdir(asset.asset_path):
-            copytree(asset.asset_path, join(dest, filename))
+            copytree(asset.asset_path, outfilepath)
         else:
-            copyfile(asset.asset_path, join(dest, filename))
+            logging.debug("{} -> {}".format(asset.asset_path, outfilepath))
+            copyfile(asset.asset_path, outfilepath)
