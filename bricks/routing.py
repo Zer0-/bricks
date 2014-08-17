@@ -174,12 +174,15 @@ class RouteApi:
                     filled_path = _fill_path(path, arg_iter)
                     if filled_path is False:
                         continue
-                    return filled_path + list(arg_iter)
+                    return path_to_urlpart(filled_path + list(arg_iter))
                 elif match(path):
                     filled_path = _fill_path(path, arg_iter)
                     if filled_path is False:
                         continue
-                    return filled_path
+                    return path_to_urlpart(filled_path)
+
+def path_to_urlpart(path):
+    return '/' + '/'.join(str(i) for i in path)
 
 def _fill_path(path, path_args):
     filled_path = []

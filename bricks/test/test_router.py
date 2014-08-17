@@ -133,11 +133,11 @@ class TestPathFinding(unittest.TestCase):
         request = Request.blank('')
         api = RouteApi(request, self.routemap)
         for path_args, path in [
-            ((), ['const_one']),
-            (('two', 'four'), ['two', 'two', 'four']),
-            (('two', '216'), ['two', 'two', 216, 'const_two']),
-            (('two', 216), ['two', 'two', 216, 'const_two']),
-            (('two', 11), ['two', 'two', 11]),
+            ((), '/const_one'),
+            (('two', 'four'), '/two/two/four'),
+            (('two', '216'), '/two/two/216/const_two'),
+            (('two', 216), '/two/two/216/const_two'),
+            (('two', 11), '/two/two/11'),
         ]:
             found = api.find(self.p_one.name, path_args)
             self.assertEqual(path, found)
