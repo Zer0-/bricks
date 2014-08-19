@@ -80,7 +80,10 @@ class Route:
         if self.name:
             info.append('name: {}'.format(self.name))
         if self.handler:
-            info.append('handler: {}'.format(self.handler.__name__))
+            if type(self.handler) is type:
+                info.append('handler: {}'.format(self.handler.__name__))
+            else:
+                info.append('handler: {}'.format(self.handler.__class__.__name__))
         if self.permissions:
             info.append('permissions: ' + str(self.permissions))
         if self.routemap:
@@ -126,12 +129,13 @@ class RouteApi:
     def vars(self):
         routemap = self.routemap
         vars = []
-        for part, route in self._matched_routes:
+        for part, route in self._matched_routes[1:]:
             if part in routemap:
                 routemap = route
-            elif route != routemap:
+            else:
                 vars.append(part)
-                routemap = route
+                if route != routemap:
+                    routemap = route
         return tuple(vars)
 
     @property

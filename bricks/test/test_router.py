@@ -11,13 +11,15 @@ class TestRequestRoute(unittest.TestCase):
         self.r3 = Route(handler=object())
         self.r4 = Route(handler=object(), handles_subtree=True)
         self.r5 = Route(handler=object())
+        endtest = lambda x: x == 'endvar'
         self.routemap = self.root + {
             'first': self.r1 + {
                 Use(int): self.r2 + {
                     'second': self.r3 + {
                         Use(int): self.r4
                     }
-                }
+                },
+                endtest: self.r1
             },
             'not_used': self.r5
         }
@@ -46,7 +48,12 @@ class TestRequestRoute(unittest.TestCase):
     def testVars(self):
         request = Request.blank('/first/1/one/two/second/2/three/four')
         routeapi = RouteApi(request, self.routemap)
-        self.assertEqual(routeapi.vars, (1, 2))
+        self.assertEqual(routeapi.vars, (1, 'one', 'two', 2, 'three', 'four'))
+
+    def testEndVar(self):
+        request = Request.blank('/first/endvar')
+        routeapi = RouteApi(request, self.routemap)
+        self.assertEqual(routeapi.vars, ('endvar',))
 
     def testTrivialRoot(self):
         request = Request.blank('/')
