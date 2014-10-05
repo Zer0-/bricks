@@ -1,6 +1,6 @@
 import unittest
 from webob import Request
-from bricks.app_bricks import create_app, app_from_routemap
+from bricks.app_bricks import Bricks, wsgi, BaseMC
 from bricks.routing import Route
 from bricks.httpexceptions import HTTPForbidden
 
@@ -17,13 +17,14 @@ class MockComponent:
 
 class TestAppCreation(unittest.TestCase):
     def testAppCreation(self):
-        app = create_app(MockMain)
+        b = Bricks()
+        mc = b.add(MockMain)
+        app = wsgi(mc)
         request = Request.blank('/some/url/doesnt/matter')
         response = request.get_response(app)
         self.assertEqual(response.body, b"hello world")
 
     def testMainComponentCreation(self):
-        from bricks.app_bricks import BaseMC, mc_from_routemap
 
         root = Route()
         r1 = Route()
@@ -39,24 +40,32 @@ class TestAppCreation(unittest.TestCase):
 
         routelist = [root, r1, r2, r3]
 
-        def mock_init(inst, *routes):
-            self.assertEqual(set(routes), set(routelist))
+        class MC(BaseMC):
+            depends_on = [routemap]
 
-        BaseMC.__init__ = mock_init
-        main_component = mc_from_routemap(routemap)
-        self.assertEqual(set(main_component.depends_on), set(routelist))
-        create_app(main_component)
+        b = Bricks()
+        mc = b.add(MC)
+        self.assertEqual(set(mc.depends_on), set(routelist))
+        wsgi(mc)
 
     def testAll(self):
         routemap = Route(handler=MockComponent)
-        app = app_from_routemap(routemap)
+        b = Bricks()
+        class MC(BaseMC):
+            depends_on = [routemap]
+        mc = b.add(MC)
+        app = wsgi(mc)
         req = Request.blank('/')
         res = req.get_response(app)
         self.assertEqual(res.body, b'hello world')
 
     def testHttpException(self):
         routemap = Route(handler=MockComponent)
-        app = app_from_routemap(routemap)
+        b = Bricks()
+        class MC(BaseMC):
+            depends_on = [routemap]
+        mc = b.add(MC)
+        app = wsgi(mc)
         req = Request.blank('/')
         req.method = 'POST'
         res = req.get_response(app)

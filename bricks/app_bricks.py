@@ -37,22 +37,17 @@ class Bricks:
         self.components[component_type] = component
         return component
 
-def create_app(main_component, dependencies=[], routemap=None):
-    bricks = Bricks()
-    for component in dependencies:
-        bricks.add(component)
-    main = bricks.add(main_component)
-
+def wsgi(main_component):
     def wsgi_app(environ, start_response):
         request = Request(environ)
         response = Response()
         try:
-            result = main(request, response)
+            result = main_component(request, response)
         except HTTPException as e:
             result = e
         if isinstance(result, HTTPException) and request.route._matched_routes != 404:
             #check the current Route for components that handle HTTPExceptions
-            #be careful - since the main component is responsible for attaching
+            #be careful - since the main_component is responsible for attaching
             #the route api to the request, request.route may not exist.
             exception_handlers = request.route.route.exc_handlers
             err_handler = exception_handlers.get(type(result), {})
@@ -66,8 +61,8 @@ def create_app(main_component, dependencies=[], routemap=None):
     return wsgi_app
 
 class BaseMC:
-    def __init__(self, *args):
-        self.routemap = args[-1]
+    def __init__(self, routemap, *args):
+        self.routemap = routemap
 
     def get_view(self, request):
         request.route = RouteApi(request, self.routemap)
@@ -81,25 +76,3 @@ class BaseMC:
 
     def __call__(self, request, response):
         return self.get_view(request)(request, response)
-
-def mc_from_routemap(routemap, base_component=BaseMC):
-    deps = getattr(base_component, 'depends_on', [])
-    deps.append(routemap)
-    return type(
-        "MainComponent",
-        (base_component,),
-        dict(depends_on=deps)
-    )
-
-def app_from_routemap(routemap, main_component=BaseMC, components=[]):
-    """Given a routemap (Route instance) this will create a wsgi app.
-    main_component is the component that will be responsible for all
-    requests. By default this is BaseMC which does routing and not much
-    else.
-
-    The components option should be a list of components that will get
-    appended to the depends_on attribute of the main_component to the
-    effect of them being initialized - useful if the components that render
-    views depend on something.
-    """
-    return create_app(mc_from_routemap(routemap, main_component), components, routemap)
