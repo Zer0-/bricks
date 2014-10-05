@@ -83,9 +83,7 @@ class BaseMC:
         return self.get_view(request)(request, response)
 
 def mc_from_routemap(routemap, base_component=BaseMC):
-    deps = []
-    if hasattr(base_component, 'depends_on'):
-        deps += base_component.depends_on
+    deps = getattr(base_component, 'depends_on', [])
     deps.append(routemap)
     return type(
         "MainComponent",
