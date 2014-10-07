@@ -5,13 +5,11 @@ def customizable(name, bases, namespace):
     else:
         custom_attributes = ()
     new_namespace = namespace.copy()
-    def customnew(cls, name, **kwargs):
-        try:
-            new_attributes = {custom_attr: kwargs[custom_attr]
-                              for custom_attr in custom_attributes}
-        except KeyError as e:
-            raise TypeError("{} requires named argument {}".format(
-                cls.__name__, e.args[0]))
+    def customnew(cls, name, **new_attributes):
+        for custom_attr in custom_attributes:
+            if not custom_attr in new_attributes:
+                raise TypeError("{} requires named argument {}".format(
+                    cls.__name__, custom_attr))
         for base in cls.__bases__ + (cls,):
             clsdict = base.__dict__.copy()
             if '__new__' in clsdict:
