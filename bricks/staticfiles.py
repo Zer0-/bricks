@@ -1,6 +1,12 @@
-from os.path import join, basename
-from .asset import resolve_spec
+from enum import Enum
+from os.path import join
 from .custom import customizable
+
+class StaticfileOptimizationLevel(Enum):
+    NOOPT = 0
+    CONCAT_PAGE = 1
+    CONCAT = 2
+    INLINE = 3
 
 class StaticManager:
     provides = ['static_manager']
@@ -23,6 +29,9 @@ class StaticManager:
              for dep in getattr(component, 'depends_on', [])]
         )
 
+    def get_url(self, static_component):
+        raise NotImplementedError()
+
 class StaticFile(metaclass=customizable):
     """Static asset that's part of a component (served locally)
     For things like coffeescript or sass that need to be compiled,
@@ -30,21 +39,18 @@ class StaticFile(metaclass=customizable):
     The 'relpath' is where the asset is relative to the root static path.
     """
     custom_attributes = ('asset',)
-    requires_configured = ['static_manager', 'json_settings']
+    requires_configured = ['static_manager']
+    optim = StaticfileOptimizationLevel.NOOPT
+    bottom = False #optimization: sends link to resource to bottom of html
     has_build_stage = False
     relpath = ''
 
-    def __init__(self, static_manager, settings):
+    def __init__(self, static_manager):
+        self.static_manager = static_manager
         static_manager.add(self)
-        self.static_url = settings['served_static_url']
-        self.asset_path = resolve_spec(self.asset)
-
-    def get_url(self):
-        return self.static_url +\
-                join(self.relpath, basename(self.asset_path))
 
     def __call__(self):
-        return self.get_url()
+        return self.static_manager.get_url(self)
 
 def _css(url):
     return '<link rel="stylesheet" href="{}" />'.format(url)
@@ -56,13 +62,13 @@ class StaticCss(StaticFile):
     relpath = 'css'
 
     def __call__(self):
-        return _css(self.get_url())
+        return _css(self.static_manager.get_url(self))
 
 class StaticJs(StaticFile):
     relpath = 'js'
 
     def __call__(self):
-        return _js(self.get_url())
+        return _js(self.static_manager.get_url(self))
 
 class ExternalStatic(metaclass=customizable):
     custom_attributes = ('url',)
