@@ -1,7 +1,7 @@
 import unittest
 from os.path import join
 from bricks import Bricks
-from bricks.staticfiles import StaticManager
+from bricks.static_manager import StaticManager
 from bricks.static_builder import establish_static_assets
 from test_components.testcomponents import (
     testcss,

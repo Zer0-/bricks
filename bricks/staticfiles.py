@@ -8,30 +8,6 @@ class StaticfileOptimizationLevel(Enum):
     CONCAT = 2
     INLINE = 3
 
-class StaticManager:
-    provides = ['static_manager']
-
-    def __init__(self):
-        self.static_components = {}
-
-    def add(self, static_component):
-        self.static_components[type(static_component)] = static_component
-
-    def render_static(self, component, visited=None):
-        if visited is None:
-            visited = set()
-        if component in visited:
-            return ''
-        visited.add(component)
-        resources_string = self.static_components.get(component, str)()
-        return resources_string + ''.join(
-            [self.render_static(dep, visited)
-             for dep in getattr(component, 'depends_on', [])]
-        )
-
-    def get_url(self, static_component):
-        raise NotImplementedError()
-
 class StaticFile(metaclass=customizable):
     """Static asset that's part of a component (served locally)
     For things like coffeescript or sass that need to be compiled,
@@ -49,8 +25,11 @@ class StaticFile(metaclass=customizable):
         self.static_manager = static_manager
         static_manager.add(self)
 
-    def __call__(self):
+    def get_url(self):
         return self.static_manager.get_url(self)
+
+    def __call__(self):
+        return self.get_url()
 
 def _css(url):
     return '<link rel="stylesheet" href="{}" />'.format(url)
@@ -62,13 +41,13 @@ class StaticCss(StaticFile):
     relpath = 'css'
 
     def __call__(self):
-        return _css(self.static_manager.get_url(self))
+        return _css(self.get_url())
 
 class StaticJs(StaticFile):
     relpath = 'js'
 
     def __call__(self):
-        return _js(self.static_manager.get_url(self))
+        return _js(self.get_url())
 
 class ExternalStatic(metaclass=customizable):
     custom_attributes = ('url',)

@@ -2,6 +2,7 @@ import os
 from os.path import join, basename, isdir, exists
 from os import makedirs
 from shutil import copyfile
+from .asset import resolve_spec
 import logging
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -36,13 +37,14 @@ def establish_static_assets(bricks):
             if root_dir is None:
                 raise ValueError("No 'served_static_dir' setting "
                                  "found in app settings")
-        filename = basename(asset.asset_path)
+        asset_path = resolve_spec(asset.asset)
+        filename = basename(asset_path)
         dest = join(root_dir, asset.relpath)
         if not exists(dest):
             makedirs(dest, exist_ok=True)
         outfilepath = join(dest, filename)
-        if isdir(asset.asset_path):
-            copytree(asset.asset_path, outfilepath)
+        if isdir(asset_path):
+            copytree(asset_path, outfilepath)
         else:
-            logging.debug("{} -> {}".format(asset.asset_path, outfilepath))
-            copyfile(asset.asset_path, outfilepath)
+            logging.debug("{} -> {}".format(asset_path, outfilepath))
+            copyfile(asset_path, outfilepath)
