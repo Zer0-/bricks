@@ -23,16 +23,17 @@ class Settings(dict):
 
     def __init__(self, location=None):
         dict.__init__(self)
-        if hasattr(__main__, '__file__'):
-            here = os.path.dirname(__main__.__file__)
+        if location is not None:
+            settings = read_settings(location)
         else:
-            here = os.path.dirname(__file__)
-        if location is None:
-            location = here
-        try:
-            settings = read_settings(location)
-        except IOError:
-            location = os.getcwd()
-            settings = read_settings(location)
+            try:
+                location = os.getcwd()
+                settings = read_settings(location)
+            except IOError:
+                if hasattr(__main__, '__file__'):
+                    location = os.path.dirname(__main__.__file__)
+                else:
+                    location = os.path.dirname(__file__)
+                settings = read_settings(location)
         self.update(settings)
         self['project_dir'] = here

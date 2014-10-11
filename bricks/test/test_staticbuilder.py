@@ -3,7 +3,7 @@ from os.path import join
 from bricks import Bricks
 from bricks.static_manager import StaticManager
 from bricks.static_builder import establish_static_assets
-from test_components.testcomponents import (
+from bricks.test.test_components.testcomponents import (
     testcss,
     testjs,
     externalcss,
