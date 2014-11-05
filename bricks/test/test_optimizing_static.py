@@ -39,7 +39,7 @@ class TestOptimizingStaticManagerGrouping(unittest.TestCase):
             def __init__(self, *_): pass
         self.a = self.bricks.add(A)
         self.b = self.bricks.add(B)
-        self.groupdict = self.static_manager.group_all(self.bricks)
+        self.groupdict = self.static_manager.group_all()
 
     def test_INLINE_NOOPT_grouping(self):
         #veryify all INLINE and NOOPT components are in their own group
@@ -80,25 +80,42 @@ class TestOptimizingStaticManagerGrouping(unittest.TestCase):
 
     def test_group_string(self):
         groupstring = self.static_manager.group_string(self.groupdict)
-        self.assertEqual(len(groupstring.split('\n\n')), 28)#bit of a hack of a test
-        #this should really test whether grouping was done correctly
-        #and is in the proper order.
+        self.assertEqual(len(groupstring.split('\n\n')), 28)#not a comprehensive test
 
-class TestOptimizingStaticManagerUrlMapping(unittest.TestCase):
+class TestOptimizingStaticManagerRendering(unittest.TestCase):
     def setUp(self):
         self.bricks = Bricks()
         self.static_manager = self.bricks.add(OptimizingStaticManager)
-        self.sf1 = StaticCss('sm1', asset='/tmp/sm1')
-        class A:
-            depends_on = [self.sf1]
+        self.aComponents = gen_all_static()
+        self.bComponents = gen_all_static('b')
+        class B:
+            depends_on = self.bComponents
 
             def __init__(self, *_): pass
 
-        self.a = self.bricks.add(A)
+        class A:
+            depends_on = self.aComponents + [B]
 
-    def test_get_url(self):
-        sf = self.bricks.add(self.sf1)
-        sf.get_url()
+            def __init__(self, *_): pass
+        self.a = self.bricks.add(A)
+        self.b = self.bricks.add(B)
+
+    def test_url_loading(self):
+        self.assertFalse(hasattr(self.static_manager, 'group_url_map'))
+        groups = self.static_manager.ordered_group(self.static_manager.group_all())
+        urls = ['http://localhost:8080/%s' % i for i in range(len(groups))]
+        self.static_manager.load_group_urls(urls)
+        self.assertEqual(len(self.static_manager.group_url_map), len(groups))
+        for component in self.aComponents + self.bComponents:
+            component = self.static_manager.components[component]
+            urla = self.static_manager.get_group_url(component, self.a)
+            urlb = self.static_manager.get_group_url(component, self.b)
+            if static_group_key(component, self.a) == static_group_key(component, self.b):
+                self.assertEqual(urla, urlb)
+            else:
+                self.assertNotEqual(urla, urlb)
+            self.assertTrue(urla.startswith('http://'))
+            self.assertTrue(urlb.startswith('http://'))
 
 if __name__ == '__main__':
     unittest.main()

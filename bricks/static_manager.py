@@ -51,9 +51,11 @@ class StaticManager:
 
 class OptimizingStaticManager:
     provides = ['static_manager']
+    requires_configured = ['bricks']
 
-    def __init__(self):
+    def __init__(self, bricks):
         self.components = {}
+        self.bricks = bricks
 
     def add(self, static_component):
         self.components[type(static_component)] = static_component
@@ -69,10 +71,10 @@ class OptimizingStaticManager:
             static_processed.add((key, component))
             groupmap[key].append(component)
 
-    def group_all(self, bricks):
+    def group_all(self):
         static_processed = set()
         groupmap = defaultdict(list)
-        for component_type, component in bricks.components.items():
+        for component_type, component in self.bricks.components.items():
             if component_type in self.components:
                 continue
             self._group_component(component, component, groupmap, static_processed)
@@ -87,6 +89,19 @@ class OptimizingStaticManager:
 
     def group_string(self, groupmap):
         return '\n\n'.join(s for _, s in self.ordered_group(groupmap))
+
+    def make_group_url_map(self, groupmap, url_list):
+        ordered_keys = [i for i, _ in self.ordered_group(groupmap)]
+        return dict(zip(ordered_keys, url_list))
+
+    def load_group_urls(self, url_list):
+        #defer running this method until all [static] components have been initialized
+        groupmap = self.group_all()
+        self.group_url_map = self.make_group_url_map(groupmap, url_list)
+
+    def get_group_url(self, static_component, parent):
+        key = static_group_key(static_component, parent)
+        return self.group_url_map[key]
 
     def get_url(self, component):
         pass

@@ -12,8 +12,10 @@ class Bricks:
     """Facilitates initialization of given components to provide
     simple dependency injection."""
 
+    provides = ['bricks']
+
     def __init__(self):
-        self.components = {}
+        self.components = {Bricks: self, 'bricks': self}
 
     def add(self, component_type):
         if component_type in self.components:
