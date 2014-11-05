@@ -8,14 +8,14 @@ from bricks.static_manager import static_group_key
 def gen_all_static(prefix='a'):
     static_components = []
     i = 0
-    for _type in (StaticJs, StaticCss):
+    for _type, suffix in ((StaticJs, 'js'), (StaticCss, 'css')):
         for level in Lvl:
             for bottom in (False, True):
                 i += 1
                 name = prefix + str(i)
                 cmpnt = _type(
                     name,
-                    asset='/tmp/'+name,
+                    asset='bricks:test/static/'+name+'.'+suffix,
                     optim=level,
                     bottom=bottom
                 )
@@ -77,6 +77,28 @@ class TestOptimizingStaticManagerGrouping(unittest.TestCase):
                 self.assertEqual(len(g), 2)
                 self.assertTrue(c in g)
                 self.assertTrue([i for i in g if i != c][0] not in self.bComponents)
+
+    def test_group_string(self):
+        groupstring = self.static_manager.group_string(self.groupdict)
+        self.assertEqual(len(groupstring.split('\n\n')), 28)#bit of a hack of a test
+        #this should really test whether grouping was done correctly
+        #and is in the proper order.
+
+class TestOptimizingStaticManagerUrlMapping(unittest.TestCase):
+    def setUp(self):
+        self.bricks = Bricks()
+        self.static_manager = self.bricks.add(OptimizingStaticManager)
+        self.sf1 = StaticCss('sm1', asset='/tmp/sm1')
+        class A:
+            depends_on = [self.sf1]
+
+            def __init__(self, *_): pass
+
+        self.a = self.bricks.add(A)
+
+    def test_get_url(self):
+        sf = self.bricks.add(self.sf1)
+        sf.get_url()
 
 if __name__ == '__main__':
     unittest.main()
