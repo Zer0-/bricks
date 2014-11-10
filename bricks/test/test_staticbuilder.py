@@ -65,7 +65,7 @@ class TestStaticBuilder(unittest.TestCase):
             (ext_css, 'http://www.somecdn.com/style.css'),
         ]
         for asset, url in asseturls:
-            self.assertEqual(asset.get_url(), url)
+            self.assertEqual(asset.url, url)
 
 if __name__ == '__main__':
     unittest.main()

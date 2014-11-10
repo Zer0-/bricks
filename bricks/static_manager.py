@@ -1,7 +1,8 @@
 from os.path import join, basename
 from collections import defaultdict
 from .asset import resolve_spec
-from bricks.staticfiles import StaticfileOptimizationLevel as Lvl
+from .staticfiles import StaticfileOptimizationLevel as Lvl
+from .staticfiles import StaticCss, StaticJs
 
 def traverse_deps(component, fn):
     for dep in getattr(component, 'depends_on', []):
@@ -96,12 +97,31 @@ class OptimizingStaticManager:
 
     def load_group_urls(self, url_list):
         #defer running this method until all [static] components have been initialized
-        groupmap = self.group_all()
-        self.group_url_map = self.make_group_url_map(groupmap, url_list)
+        groups = self.group_all()
+        url_map = self.make_group_url_map(groups, url_list)
+        self.groupmap = {}
+        for key, group in groups.items():
+            self.groupmap[key] = self.gen_group_component(
+                                            group[0], url_map[key])
 
-    def get_group_url(self, static_component, parent):
+    def map_component(self, static_component, parent):
         key = static_group_key(static_component, parent)
-        return self.group_url_map[key]
+        return self.groupmap[key]
 
-    def get_url(self, component):
-        pass
+    def gen_group_component(self, component, group_url):
+        if component.target_type == 'css':
+            newtype = StaticCss
+        elif component.target_type == 'js':
+            newtype = StaticJs
+        else:
+            raise NotImplementedError()
+        group = newtype(
+            group_url,
+            asset=group_url,
+            optim=component.optim,
+            bottom=component.bottom
+        )
+        return self.bricks.add(group)
+
+    def get_url(self, *_):
+        return None

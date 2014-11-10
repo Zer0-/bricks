@@ -25,7 +25,7 @@ def establish_static_assets(bricks):
     static_manager = bricks.components.get('static_manager')
     asset_components = static_manager.static_components.values()
     for asset in asset_components:
-        if not hasattr(asset, 'asset'):
+        if not hasattr(asset, 'asset') or asset.asset.startswith('http'):
             continue
         if asset.has_build_stage:
             root_dir = settings.get('static_buildout_dir')#change to static_stage_dir

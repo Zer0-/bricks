@@ -105,17 +105,19 @@ class TestOptimizingStaticManagerRendering(unittest.TestCase):
         groups = self.static_manager.ordered_group(self.static_manager.group_all())
         urls = ['http://localhost:8080/%s' % i for i in range(len(groups))]
         self.static_manager.load_group_urls(urls)
-        self.assertEqual(len(self.static_manager.group_url_map), len(groups))
+        self.assertEqual(len(self.static_manager.groupmap), len(groups))
         for component in self.aComponents + self.bComponents:
             component = self.static_manager.components[component]
-            urla = self.static_manager.get_group_url(component, self.a)
-            urlb = self.static_manager.get_group_url(component, self.b)
+            acomp = self.static_manager.map_component(component, self.a)
+            bcomp = self.static_manager.map_component(component, self.b)
             if static_group_key(component, self.a) == static_group_key(component, self.b):
-                self.assertEqual(urla, urlb)
+                self.assertEqual(acomp, bcomp)
             else:
-                self.assertNotEqual(urla, urlb)
-            self.assertTrue(urla.startswith('http://'))
-            self.assertTrue(urlb.startswith('http://'))
+                self.assertNotEqual(acomp, bcomp)
+            for group in (acomp, bcomp):
+                self.assertTrue(group.asset.startswith('http://'))
+                self.assertEqual(group.bottom, component.bottom)
+                self.assertEqual(group.optim, component.optim)
 
 if __name__ == '__main__':
     unittest.main()

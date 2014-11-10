@@ -20,52 +20,28 @@ class StaticFile(metaclass=customizable):
     bottom = False #optimization: sends link to resource to bottom of html
     has_build_stage = False
     relpath = ''
+    target_type = None
 
     def __init__(self, static_manager):
-        self.static_manager = static_manager
         static_manager.add(self)
-
-    def get_url(self):
-        return self.static_manager.get_url(self)
+        if self.asset.startswith('http'):
+            self.url = self.asset
+        else:
+            self.url = static_manager.get_url(self)
 
     def __call__(self):
-        return self.get_url()
-
-def _css(url):
-    return '<link rel="stylesheet" href="{}" />'.format(url)
-
-def _js(url):
-    return '<script src="{}"></script>'.format(url)
+        return self.url()
 
 class StaticCss(StaticFile):
     relpath = 'css'
+    target_type = 'css'
 
     def __call__(self):
-        return _css(self.get_url())
+        return '<link rel="stylesheet" href="{}" />'.format(self.url())
 
 class StaticJs(StaticFile):
     relpath = 'js'
+    target_type = 'js'
 
     def __call__(self):
-        return _js(self.get_url())
-
-class ExternalStatic(metaclass=customizable):
-    custom_attributes = ('url',)
-    requires_configured = ['static_manager']
-
-    def __init__(self, static_manager):
-        static_manager.add(self)
-
-    def get_url(self):
-        return self.url
-
-    def __call__(self):
-        return self.url
-
-class ExternalCss(ExternalStatic):
-    def __call__(self):
-        return _css(self.url)
-
-class ExternalJs(ExternalStatic):
-    def __call__(self):
-        return _js(self.url)
+        return '<script src="{}"></script>'.format(self.url())
