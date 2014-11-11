@@ -101,10 +101,28 @@ class TestOptimizingStaticManagerRendering(unittest.TestCase):
         self.b = self.bricks.add(B)
 
     def test_url_loading(self):
+        from bricks import static_manager
         self.assertFalse(hasattr(self.static_manager, 'group_url_map'))
-        groups = self.static_manager.ordered_group(self.static_manager.group_all())
-        urls = ['http://localhost:8080/%s' % i for i in range(len(groups))]
+        groupmap = self.static_manager.group_all()
+        groups = self.static_manager.ordered_group(groupmap)
+        urls = ['http://localhost:8080/{}.{}'.format(i, groupmap[key][0].target_type) \
+               for i, (key, _) in enumerate(groups)]
+
+        #monkeypatch fetch_asset for testing
+        orig_fetch_asset = static_manager.fetch_asset
+        n_called = 0
+        css_contents = "*{color: blue}"
+        js_contents = "console.log('hello world');"
+        def test_fetch_asset(url):
+            nonlocal n_called
+            n_called += 1
+            if url.endswith("css"):
+                return css_contents
+            else:
+                return js_contents
+        static_manager.fetch_asset = test_fetch_asset
         self.static_manager.load_group_urls(urls)
+        static_manager.fetch_asset = orig_fetch_asset
         self.assertEqual(len(self.static_manager.groupmap), len(groups))
         for component in self.aComponents + self.bComponents:
             component = self.static_manager.components[component]
@@ -115,7 +133,15 @@ class TestOptimizingStaticManagerRendering(unittest.TestCase):
             else:
                 self.assertNotEqual(acomp, bcomp)
             for group in (acomp, bcomp):
-                self.assertTrue(group.asset.startswith('http://'))
+                if group.optim == Lvl.INLINE:
+                    if group.target_type == 'css':
+                        self.assertEqual(group.asset, css_contents)
+                    elif group.target_type == 'js':
+                        self.assertEqual(group.asset, js_contents)
+                    else:
+                        raise Exception("static component unsupported target type")
+                else:
+                    self.assertTrue(group.asset.startswith('http://'))
                 self.assertEqual(group.bottom, component.bottom)
                 self.assertEqual(group.optim, component.optim)
 

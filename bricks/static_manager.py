@@ -21,6 +21,11 @@ def static_group_key(static_component, parent_component):
             parent_component
         )
 
+def fetch_asset(url):
+    from urllib import request
+    with request.urlopen(url) as asset:
+        return asset.read()
+
 class StaticManager:
     requires_configured = ['json_settings']
     provides = ['static_manager']
@@ -41,6 +46,9 @@ class StaticManager:
                 visited.add(c)
         traverse_deps(component, append_static)
         return ''.join(c() for c in to_render)
+
+    def render_bottom_static(self, *_):
+        return ''
 
     def get_url(self, static_component):
         asset_path = resolve_spec(static_component.asset)
@@ -115,13 +123,49 @@ class OptimizingStaticManager:
             newtype = StaticJs
         else:
             raise NotImplementedError()
+        if component.optim == Lvl.INLINE:
+            asset = fetch_asset(group_url)
+        else:
+            asset = group_url
         group = newtype(
             group_url,
-            asset=group_url,
+            asset=asset,
             optim=component.optim,
             bottom=component.bottom
         )
         return self.bricks.add(group)
+
+    def _render_static(self, component, bottom=False):
+        visited = set()
+        to_render = []
+        def append_static(c):
+            if c in self.static_components:
+                c = self.static_components[c]
+                if not c.bottom == bottom:
+                    return
+                key = static_group_key(c, component)
+                if key not in visited:
+                    to_render.append(c)
+                    visited.add(c)
+        traverse_deps(component, append_static)
+        return ''.join(self._render(c) for c in to_render)
+
+    def _render(self, static_component):
+        if static_component.optim == Lvl.INLINE:
+            if static_component.target_type == 'css':
+                return '<style>{}</style>'.format(static_component.asset)
+            elif static_component.target_type == 'js':
+                return '<script>{}</script>'.format(static_component.asset)
+            else:
+                raise NotImplementedError()
+        else:
+            return static_component()
+
+    def render_static(self, component):
+        return self._render_static(component)
+
+    def render_bottom_static(self, component):
+        return self._render_static(component, bottom=True)
 
     def get_url(self, *_):
         return None
