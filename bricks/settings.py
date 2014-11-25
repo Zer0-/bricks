@@ -36,4 +36,4 @@ class Settings(dict):
                     location = os.path.dirname(__file__)
                 settings = read_settings(location)
         self.update(settings)
-        self['project_dir'] = here
+        self['project_dir'] = location
