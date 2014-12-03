@@ -48,6 +48,7 @@ class StaticManager:
         return ''.join(c() for c in to_render)
 
     def render_bottom_static(self, *_):
+        """Dummy method for interchangability with OptimizingStaticManager"""
         return ''
 
     def get_url(self, static_component):
@@ -84,9 +85,12 @@ class OptimizingStaticManager:
         static_processed = set()
         groupmap = defaultdict(list)
         for component_type, component in self.bricks.components.items():
+            #we are assuming that static components (those in self.components)
+            #will be children of some parent component. Thus we ignore them
+            #at the top level.
             if component_type in self.components:
                 continue
-            self._group_component(component, component, groupmap, static_processed)
+            self._group_component(component, component_type, groupmap, static_processed)
         return groupmap
 
     def ordered_group(self, groupmap):
@@ -139,8 +143,8 @@ class OptimizingStaticManager:
         visited = set()
         to_render = []
         def append_static(c):
-            if c in self.static_components:
-                c = self.static_components[c]
+            if c in self.components:
+                c = self.components[c]
                 if not c.bottom == bottom:
                     return
                 key = static_group_key(c, component)
@@ -168,4 +172,4 @@ class OptimizingStaticManager:
         return self._render_static(component, bottom=True)
 
     def get_url(self, *_):
-        return None
+        return ""

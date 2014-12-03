@@ -17,7 +17,7 @@ class StaticFile(metaclass=customizable):
     custom_attributes = ('asset',)
     requires_configured = ['static_manager']
     optim = StaticfileOptimizationLevel.NOOPT
-    bottom = False #optimization: sends link to resource to bottom of html
+    bottom = False #optimization: flags resource to be rendered at bottom of page
     has_build_stage = False
     relpath = ''
     target_type = None
@@ -30,18 +30,18 @@ class StaticFile(metaclass=customizable):
             self.url = static_manager.get_url(self)
 
     def __call__(self):
-        return self.url()
+        return self.url
 
 class StaticCss(StaticFile):
     relpath = 'css'
     target_type = 'css'
 
     def __call__(self):
-        return '<link rel="stylesheet" href="{}" />'.format(self.url())
+        return '<link rel="stylesheet" href="{}" />'.format(self.url)
 
 class StaticJs(StaticFile):
     relpath = 'js'
     target_type = 'js'
 
     def __call__(self):
-        return '<script src="{}"></script>'.format(self.url())
+        return '<script src="{}"></script>'.format(self.url)

@@ -102,7 +102,7 @@ class TestOptimizingStaticManagerRendering(unittest.TestCase):
 
     def test_url_loading(self):
         from bricks import static_manager
-        self.assertFalse(hasattr(self.static_manager, 'group_url_map'))
+        self.assertFalse(hasattr(self.static_manager, 'groupmap'))
         groupmap = self.static_manager.group_all()
         groups = self.static_manager.ordered_group(groupmap)
         urls = ['http://localhost:8080/{}.{}'.format(i, groupmap[key][0].target_type) \
