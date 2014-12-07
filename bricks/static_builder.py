@@ -1,20 +1,20 @@
 import os
-from os.path import join, basename, isdir, exists
-from os import makedirs
+from os.path import join, dirname, isdir, exists
 from shutil import copyfile
 from .asset import resolve_spec
+from .static_manager import path_to_src
 import logging
 
 def copytree(src, dst, symlinks=False, ignore=None):
-    if not os.path.exists(dst):
+    if not exists(dst):
         os.makedirs(dst)
     for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
+        s = join(src, item)
+        d = join(dst, item)
+        if isdir(s):
             copytree(s, d, symlinks, ignore)
         else:
-            if not os.path.exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
+            if not exists(d) or os.stat(src).st_mtime - os.stat(dst).st_mtime > 1:
                 logging.debug("{} -> {}".format(s, d))
                 copyfile(s, d)
 
@@ -38,13 +38,12 @@ def establish_static_assets(bricks):
                 raise ValueError("No 'served_static_dir' setting "
                                  "found in app settings")
         asset_path = resolve_spec(asset.asset)
-        filename = basename(asset_path)
-        dest = join(root_dir, asset.relpath)
-        if not exists(dest):
-            makedirs(dest, exist_ok=True)
-        outfilepath = join(dest, filename)
+        dest = join(root_dir, path_to_src(asset_path))
+        dest_dir = dirname(dest)
+        if not exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
         if isdir(asset_path):
-            copytree(asset_path, outfilepath)
+            copytree(asset_path, dest)
         else:
-            logging.debug("{} -> {}".format(asset_path, outfilepath))
-            copyfile(asset_path, outfilepath)
+            logging.debug("{} -> {}".format(asset_path, dest))
+            copyfile(asset_path, dest)

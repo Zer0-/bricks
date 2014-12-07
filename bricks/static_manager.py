@@ -1,4 +1,4 @@
-from os.path import join, basename
+from os.path import join, dirname, split
 from collections import defaultdict
 from .asset import resolve_spec
 from .staticfiles import StaticfileOptimizationLevel as Lvl
@@ -20,6 +20,34 @@ def static_group_key(static_component, parent_component):
             static_component.relpath,
             parent_component
         )
+
+def _nice_name(name):
+    if len(name) <= 5:
+        if '-' in name or '_' in name:
+            return True
+        elif name.lower() != name:
+            return True
+        else:
+            return False
+    return True
+
+def path_to_src(path):
+    """
+    Takes a filepath and gives us a (shorter) relative path to the asset.
+    Used to determine the relative path from the served static directory to
+    the asset for example.
+    """
+    dirpath, filename = split(path)
+    subfolders = 1
+    if not _nice_name(filename.split('.')[0]):
+        subfolders = 2
+    nice_path = []
+    for part in dirpath.strip('/').split('/')[::-1]:
+        if _nice_name(part):
+            nice_path.append(part)
+        if len(nice_path) >= subfolders:
+            break
+    return '/'.join(nice_path[::-1] + [filename])
 
 def fetch_asset(url):
     from urllib import request
@@ -53,11 +81,7 @@ class StaticManager:
 
     def get_url(self, static_component):
         asset_path = resolve_spec(static_component.asset)
-        return self.static_url +\
-            join(
-                static_component.relpath,
-                basename(asset_path)
-            )
+        return self.static_url + path_to_src(asset_path)
 
 class OptimizingStaticManager:
     provides = ['static_manager']

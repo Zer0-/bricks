@@ -48,8 +48,8 @@ class TestStaticBuilder(unittest.TestCase):
         establish_static_assets(self.pbricks)
         out_dir = self.pbricks.components['json_settings']['served_static_dir']
         ftests = [
-            ('css/style.css', 'body{background-color: teal;}\n'),
-            ('js/what.js', 'function(){};\n')
+            ('test_components/static/style.css', 'body{background-color: teal;}\n'),
+            ('test_components/static/what.js', 'function(){};\n')
         ]
         for fname, contents in ftests:
             match = file_contents_match(join(out_dir, fname), contents)
@@ -60,8 +60,8 @@ class TestStaticBuilder(unittest.TestCase):
         css = self.pbricks.components[testcss]
         ext_css = self.pbricks.components[externalcss]
         asseturls = [
-            (js, 'http://localhost:8888/js/what.js'),
-            (css, 'http://localhost:8888/css/style.css'),
+            (js, 'http://localhost:8888/test_components/static/what.js'),
+            (css, 'http://localhost:8888/test_components/static/style.css'),
             (ext_css, 'http://www.somecdn.com/style.css'),
         ]
         for asset, url in asseturls:

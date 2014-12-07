@@ -30,7 +30,7 @@ class StaticFile(metaclass=customizable):
             self.url = static_manager.get_url(self)
 
     def __call__(self):
-        return self.url
+        return ''
 
 class StaticCss(StaticFile):
     relpath = 'css'
