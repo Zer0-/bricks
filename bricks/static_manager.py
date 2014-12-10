@@ -38,8 +38,9 @@ def path_to_src(path):
     the asset for example.
     """
     dirpath, filename = split(path)
+    name = filename.split('.')[0]
     subfolders = 1
-    if not _nice_name(filename.split('.')[0]):
+    if not _nice_name(name):
         subfolders = 2
     nice_path = []
     for part in dirpath.strip('/').split('/')[::-1]:
@@ -47,6 +48,8 @@ def path_to_src(path):
             nice_path.append(part)
         if len(nice_path) >= subfolders:
             break
+    if name in nice_path:
+        nice_path.remove(name)
     return '/'.join(nice_path[::-1] + [filename])
 
 def fetch_asset(url):
