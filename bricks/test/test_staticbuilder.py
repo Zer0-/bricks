@@ -22,7 +22,7 @@ class Settings(dict):
         import tempfile
         self.tmp = tempfile.mkdtemp()
         self['served_static_dir'] = self.tmp
-        self['served_static_url'] = 'http://localhost:8888/'
+        self['served_static_url'] = 'http://localhost:8888'
 
     def cleanup(self):
         from shutil import rmtree

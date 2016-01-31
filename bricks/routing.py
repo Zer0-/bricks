@@ -116,10 +116,11 @@ def _match_routes(path, routemap):
     return matched
 
 class RouteApi:
-    def __init__(self, request, routemap):
+    def __init__(self, request, routemap, prefix=''):
         self.routemap = routemap
         path = [p for p in request.path.split('/') if len(p)]
         self._matched_routes = _match_routes(path, routemap)
+        self.prefix = prefix + '/'
 
     @property
     def path(self):
@@ -178,15 +179,18 @@ class RouteApi:
                     filled_path = _fill_path(path, arg_iter)
                     if filled_path is False:
                         continue
-                    return path_to_urlpart(filled_path + list(arg_iter))
+                    return path_to_urlpart(
+                            filled_path + list(arg_iter),
+                            self.prefix
+                            )
                 elif match(path):
                     filled_path = _fill_path(path, arg_iter)
                     if filled_path is False:
                         continue
-                    return path_to_urlpart(filled_path)
+                    return path_to_urlpart(filled_path, self.prefix)
 
-def path_to_urlpart(path):
-    return '/' + '/'.join(str(i) for i in path)
+def path_to_urlpart(path, prefix='/'):
+    return prefix + '/'.join(str(i) for i in path)
 
 def _fill_path(path, path_args):
     filled_path = []

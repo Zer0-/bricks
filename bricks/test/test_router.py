@@ -159,5 +159,18 @@ class TestPathFinding(unittest.TestCase):
             path = api.find(self.p_one.name, path_args)
             self.assertEqual(path, None)
 
+    def testRoutePrefix(self):
+        request = Request.blank('')
+        api = RouteApi(request, self.routemap, '/test')
+        for path_args, path in [
+            ((), '/test/const_one'),
+            (('two', 'four'), '/test/two/two/four'),
+            (('two', '216'), '/test/two/two/216/const_two'),
+            (('two', 216), '/test/two/two/216/const_two'),
+            (('two', 11), '/test/two/two/11'),
+        ]:
+            found = api.find(self.p_one.name, path_args)
+            self.assertEqual(path, found)
+
 if __name__ == '__main__':
     unittest.main()
