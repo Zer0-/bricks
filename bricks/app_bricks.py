@@ -63,11 +63,13 @@ def wsgi(main_component):
     return wsgi_app
 
 class BaseMC:
+    server_prefix = ''
+
     def __init__(self, routemap, *args):
         self.routemap = routemap
 
     def get_view(self, request):
-        request.route = RouteApi(request, self.routemap)
+        request.route = RouteApi(request, self.routemap, self.server_prefix)
         if request.route._matched_routes == 404:
             raise HTTPNotFound()
         route = request.route.route
