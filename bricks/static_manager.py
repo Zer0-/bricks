@@ -1,4 +1,5 @@
 from os.path import join, dirname, split
+from urllib.parse import urljoin
 from collections import defaultdict
 from .asset import resolve_spec
 from .staticfiles import StaticfileOptimizationLevel as Lvl
@@ -84,7 +85,7 @@ class StaticManager:
 
     def get_url(self, static_component):
         asset_path = resolve_spec(static_component.asset)
-        return self.static_url + path_to_src(asset_path)
+        return urljoin(self.static_url, path_to_src(asset_path))
 
 class OptimizingStaticManager:
     provides = ['static_manager']
