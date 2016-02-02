@@ -16,6 +16,7 @@ def json_response(viewfn):
         view_result = viewfn(clsinst, request, response)
         response.content_type = 'application/json'
         response.text = dumps(view_result)
+        return view_result
     return wrapper
 
 def json_api(viewfn):
@@ -24,7 +25,7 @@ def json_api(viewfn):
             request.json
         except ValueError:
             raise HTTPBadRequest('Invalid JSON')
-        json_response(viewfn)(clsinst, request, response)
+        return json_response(viewfn)(clsinst, request, response)
     return wrapper
 
 def mako_response(template_assetspec):
