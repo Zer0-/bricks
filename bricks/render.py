@@ -1,6 +1,8 @@
+from json import dumps
 from mako.template import Template
 from .asset import resolve_spec
 from .mako_lookup import ResourceTemplateLookup
+from .httpexceptions import HTTPBadRequest
 
 def string_response(viewfn):
     def wrapper(clsinst, request, response):
@@ -10,11 +12,19 @@ def string_response(viewfn):
     return wrapper
 
 def json_response(viewfn):
-    from json import dumps
     def wrapper(clsinst, request, response):
         view_result = viewfn(clsinst, request, response)
         response.content_type = 'application/json'
         response.text = dumps(view_result)
+    return wrapper
+
+def json_api(viewfn):
+    def wrapper(clsinst, request, response):
+        try:
+            request.json
+        except ValueError:
+            raise HTTPBadRequest('Invalid JSON')
+        json_response(viewfn)(clsinst, request, response)
     return wrapper
 
 def mako_response(template_assetspec):
