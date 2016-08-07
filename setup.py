@@ -26,4 +26,5 @@ setup(
     include_package_data=True,
     install_requires=requires,
     dependency_links=links,
+    test_suite="bricks.test"
 )
